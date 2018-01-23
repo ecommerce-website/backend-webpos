@@ -16,7 +16,7 @@ class productsController extends Controller
     {
         //
         $limit = $request->input('limit')?$request->input('limit'):8;
-        $products = Products::orderBy('product_id','ASC')
+        $products = Products::with(['barcodes'])
         ->select(
             'product_id',
             'product_type',
@@ -30,21 +30,9 @@ class productsController extends Controller
             'product_on_hand',
             'product_retail_price'
         )
+        ->orderBy('product_id','asc')
         ->paginate($limit);
-        $products->product_barcodes = array();
-        foreach ($products as $value){
-            $data = $value
-                    ->barcodes
-                    ->where($value->product_id,'=',$value->barcode_product_id);
-            foreach ($data as $barcodes) {
-                # code...
-                echo "<pre>";
-                var_dump($barcodes->toArray());
-                echo "</pre>";
-            }
-        }
-        // $this->transformCollection($products);
-        // return response()->json($this->transformCollection($products),200);
+        return response()->json($this->transformCollection($products),200);
     }
 
     /**
@@ -115,21 +103,37 @@ class productsController extends Controller
     }
     public function transformCollection($products) {
         $productsToArray = $products->toArray();
-        // return [    
-        //     'current_page' => $productsToArray['current_page'],
-        //     'first_page_url' => $productsToArray['first_page_url'],
-        //     'last_page_url' => $productsToArray['last_page_url'],
-        //     'next_page_url' => $productsToArray['next_page_url'],
-        //     'prev_page_url' => $productsToArray['prev_page_url'],
-        //     'per_page' => $productsToArray['per_page'],
-        //     'from' => $productsToArray['from'],
-        //     'to' => $productsToArray['to'],
-        //     'total' => $productsToArray['total'],
-        //     'data' => array_map([$this,'transformData'],$productsToArray['data']);
+        return [    
+            'current_page' => $productsToArray['current_page'],
+            'first_page_url' => $productsToArray['first_page_url'],
+            'last_page_url' => $productsToArray['last_page_url'],
+            'next_page_url' => $productsToArray['next_page_url'],
+            'prev_page_url' => $productsToArray['prev_page_url'],
+            'per_page' => $productsToArray['per_page'],
+            'from' => $productsToArray['from'],
+            'to' => $productsToArray['to'],
+            'total' => $productsToArray['total'],
+            'status' => 0,
+            'messages' => 'Return success!',
+            'data' => array_map([$this,'transformData'],$productsToArray['data'])
 
-        // ];
-        // echo "<pre>";
-        // print_r($products);
-        // echo "</pre>";
+        ];
+    }
+    public function transformData($products) {
+        $show = json_decode(json_encode($products));
+        return [
+            'product_id' => $products['product_id'],
+            'product_type' => $products['product_type'],
+            'product_stock_number' => $products['product_stock_number'],
+            'product_name' => $products['product_name'],
+            'product_img' => $products['product_img'],
+            'product_unit_string' => $products['product_unit_string'],
+            'product_unit_quantity' => $products['product_unit_quantity'],
+            'product_description' => $products['product_description'],
+            'product_active' => $products['product_active'],
+            'product_on_hand' => $products['product_on_hand'],
+            'product_retail_price' => $products['product_retail_price'],
+            'product_barcodes' => $products['barcodes']
+        ];
     }
 }

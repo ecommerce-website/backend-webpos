@@ -11,4 +11,7 @@ class Products extends Model
     public function barcodes() {
     	return $this->hasMany('App\Barcodes','barcode_product_id','product_id');
     }
+    public function tags() {
+    	return $this->belongsTomany('App\Tags');
+    }
 }
