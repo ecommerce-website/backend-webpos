@@ -8,4 +8,7 @@ class Tags extends Model
 {
     //
     protected $table = 'tags';
+    public function products() {
+    	return $this->belongsToMany('App\Products');
+    }
 }

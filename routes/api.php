@@ -18,5 +18,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 Route::group(['prefix'=>'rest/v1'],function() {
 	Route::resource('products','productsController');
-	Route::resource('products/{id}','productsController@destroy');
 });
