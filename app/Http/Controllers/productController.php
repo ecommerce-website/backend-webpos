@@ -4,44 +4,27 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Products;
-use App\Barcodes;
-use App\Tags;
-use App\QLTags;
-use DB;
 
-class productsController extends Controller
+class productController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index($id)
     {
         //
-        $limit = $request->input('limit')?$request->input('limit'):8;
-        $products = Products::with(array(
+        $product = Products::with(array(
             'barcodes',
-            'qltags' => function($query){
+            'qltags' => function($query) {
                 $query->with('tags');
             }
         ))
-        ->select(
-            'product_id',
-            'product_type',
-            'product_stock_number',
-            'product_name',
-            'product_img',
-            'product_unit_string',
-            'product_unit_quantity',
-            'product_description',
-            'product_active',
-            'product_on_hand',
-            'product_retail_price'
-        )
-        ->orderBy('product_id','asc')
-        ->paginate($limit);
-        return response()->json($this->transformCollection($products),200);
+        ->where('product_id',$id)
+        ->get();
+        
+        return response()->json($this->transformCollection($product),200);
     }
 
     /**
@@ -63,61 +46,6 @@ class productsController extends Controller
     public function store(Request $request)
     {
         //
-        $product = new Products;
-        if (!$request->input('stock-num') || !$request->input('name') || !$request->input('price')) {
-            return Response::json([
-                'error' => [
-                    'status' => 1,
-                    'message' => 'Hãy cung cấp đủ thông tin'
-                ]
-            ],422);
-        }
-        $product_id = Products::select('product_id')->max('product_id') + 1;
-        $product->product_type = 'Regular product';
-        $product->product_stock_number = $request->input('stock-num');
-        $product->product_name = $request->input('name');
-        $product->product_unit_string = 'Piece';
-        $product->product_unit_quantity = 1;
-        $product->product_cost = $request->input('cost')?$request->input('cost'):0;
-        $product->product_retail_price = $request->input('price')?$request->input('price'):0;
-        $product->product_description = $request->input('description')?$request->input('description'):'';
-        $product->product_min_quantity = $request->input('min-quan')?$request->input('min-quan'):'';
-        $product->save();
-
-        $bc = $request->input('barcode');
-        $listBc = explode(',', $bc);
-        for ($i = 0;$i < count($listBc);$i++) {
-            $barcode = new Barcodes;
-            $barcode->barcode_product_id = $product_id;
-            $barcode->barcode_name = $listBc[$i];
-            $barcode->save();
-        }
-
-        $tag = $request->input('tag');
-        $listTag = explode(',', $tag);
-        $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
-        for ($i = 0;$i < count($listTag);$i++) {
-            $t = false;
-            $tag_id = 0;
-            for ($j = 0;$j < count($listTagExisted);$j++) {
-                if ($listTag[$i] === $listTagExisted[$j]['tag_name']) {
-                    $tag_id = $listTagExisted[$j]['tag_id'];
-                    $t = true;
-                    break;
-                }
-            }
-            if (!$t) {
-                $tags = new Tags;
-                $tags->tag_name = $listTag[$i];
-                $tags->save();
-            }
-
-            $qltag = new QLTags;
-            $qltag->ql_tags_product_id = $product_id;
-            if ($t) $qltag->ql_tags_tag_id = $tag_id;
-            else $qltags->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
-            $qltags->save();
-        }
     }
 
     /**
@@ -164,29 +92,13 @@ class productsController extends Controller
     {
         //
     }
-    public function productBarcode($product) {
-        $arr = [];
-        for ($i = 0;$i < count($product);$i++) {
-            array_push($arr, $product['barcode_id'],$product['barcode_name'],$product['barcode_img']);
-        }
-        return $arr;
-    }
     public function transformCollection($products) {
         //Chuyển truy vấn dạng object thành mảng
         $productsToArray = $products->toArray();
-        return [    
-            'current_page' => $productsToArray['current_page'],
-            'first_page_url' => $productsToArray['first_page_url'],
-            'last_page_url' => $productsToArray['last_page_url'],
-            'next_page_url' => $productsToArray['next_page_url'],
-            'prev_page_url' => $productsToArray['prev_page_url'],
-            'per_page' => $productsToArray['per_page'],
-            'from' => $productsToArray['from'],
-            'to' => $productsToArray['to'],
-            'total' => $productsToArray['total'],
+        return [  
             'status' => 0,
             'messages' => 'Return success!',
-            'data' => array_map([$this,'transformData'],$productsToArray['data'])
+            'data' => array_map([$this,'transformData'],$productsToArray)
         ];
     }
     public function transformData($products) {
@@ -197,12 +109,9 @@ class productsController extends Controller
             'product_type' => $products['product_type'],
             'product_stock_number' => $products['product_stock_number'],
             'product_name' => $products['product_name'],
-            'product_img' => $products['product_img'],
             'product_unit_string' => $products['product_unit_string'],
             'product_unit_quantity' => $products['product_unit_quantity'],
             'product_description' => $products['product_description'],
-            'product_active' => $products['product_active'],
-            'product_on_hand' => $products['product_on_hand'],
             'product_retail_price' => $products['product_retail_price'],
             'product_barcodes' => $this->collectBarcode($products['barcodes']),
             'product_ql_tags' => $this->collectQLTag($products['qltags'])
