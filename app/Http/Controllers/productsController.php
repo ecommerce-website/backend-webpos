@@ -38,10 +38,6 @@ class productsController extends Controller
         )
         ->orderBy('product_id','asc')
         ->paginate($limit);
-        // echo "<pre>";
-        // print_r($products->toArray());
-        // echo "</pre>";
-        //Trả về dạng json
         return response()->json($this->transformCollection($products),200);
     }
 
