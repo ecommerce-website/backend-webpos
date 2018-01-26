@@ -15,7 +15,7 @@ class CreateTableQLInvoices extends Migration
     {
         //
         Schema::create('ql_invoices', function (Blueprint $table) {
-            $table->increments('ql_ivoices_id');
+            $table->increments('ql_invoices_id');
             $table->integer('ql_invoices_invoice_id')->unsigned();
             $table->integer('ql_invoices_product_id')->unsigned();
             $table->integer('ql_invoices_discount');
