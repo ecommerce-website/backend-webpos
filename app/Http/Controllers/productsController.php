@@ -64,7 +64,7 @@ class productsController extends Controller
     {
         //
         $product = new Products;
-        if (!$request->input('stock-num') || !$request->input('name') || !$request->input('price')) {
+        if (!$request->input('product_stock_number') || !$request->input('product_name') || !$request->input('product_retail_price')) {
             return Response::json([
                 'error' => [
                     'status' => 1,
@@ -74,26 +74,28 @@ class productsController extends Controller
         }
         $product_id = Products::select('product_id')->max('product_id') + 1;
         $product->product_type = 'Regular product';
-        $product->product_stock_number = $request->input('stock-num');
-        $product->product_name = $request->input('name');
-        $product->product_unit_string = 'Piece';
+        $product->product_stock_number = $request->input('product_stock_number');
+        $product->product_name = $request->input('product_name');
+        $product->product_unit_string = 'PC';
         $product->product_unit_quantity = 1;
-        $product->product_cost = $request->input('cost')?$request->input('cost'):0;
-        $product->product_retail_price = $request->input('price')?$request->input('price'):0;
-        $product->product_description = $request->input('description')?$request->input('description'):'';
-        $product->product_min_quantity = $request->input('min-quan')?$request->input('min-quan'):'';
+        $product->product_cost = $request->input('product_cost')?$request->input('cost'):0;
+        $product->product_retail_price = $request->input('product_retail_price')?$request->input('product_retail_price'):0;
+        $product->product_description = $request->input('product_description')?$request->input('product_description'):'';
+        $product->product_min_quantity = $request->input('product_min_quantity')?$request->input('product_min_quantity'):0;
+        $product_max_quantity = $request->input('product_max_quantity')?$request->input('product_max_quantity'):0;
         $product->save();
 
-        $bc = $request->input('barcode');
-        $listBc = explode(',', $bc);
-        for ($i = 0;$i < count($listBc);$i++) {
-            $barcode = new Barcodes;
-            $barcode->barcode_product_id = $product_id;
-            $barcode->barcode_name = $listBc[$i];
-            $barcode->save();
+        if ($bc = $request->input('product_barcode')){
+            $listBc = explode(',', $bc);
+            for ($i = 0;$i < count($listBc);$i++) {
+                $barcode = new Barcodes;
+                $barcode->barcode_product_id = $product_id;
+                $barcode->barcode_name = $listBc[$i];
+                $barcode->save();
+            }
         }
 
-        $tag = $request->input('tag');
+        $tag = $request->input('product_tag');
         $listTag = explode(',', $tag);
         $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
         for ($i = 0;$i < count($listTag);$i++) {
@@ -163,6 +165,7 @@ class productsController extends Controller
     public function destroy($id)
     {
         //
+
     }
     public function productBarcode($product) {
         $arr = [];
