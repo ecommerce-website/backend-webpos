@@ -19,6 +19,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::group(['prefix' => 'rest/v1'],function() {
 	Route::get('products/show/{id}','productController@index');
 	Route::post('products/store/{id}','productController@store');
+	Route::get('products/edit/{id}','productController@edit');
 
 	Route::get('products/sales/{id}','productsSaleController@index');
 	Route::get('products/transactions/{id}','productsTransController@index');
