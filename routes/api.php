@@ -26,7 +26,10 @@ Route::group(['prefix' => 'rest/v1'],function() {
 
 	Route::get('products','productsController@index');
 	Route::post('products/store','productsController@store');
-	Route::post('products/delete/{id}','productsController@delete');
+	Route::post('products/delete','productsController@destroy');
+	Route::post('products/active','productsController@update');
+
+	Route::post('products/storeUnit/{id}','productsUnitController@store');
 
 	Route::get('products/filter','productsFilter@index');
 

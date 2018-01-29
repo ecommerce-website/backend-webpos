@@ -83,6 +83,7 @@ class productsController extends Controller
         $product->product_description = $request->input('product_description')?$request->input('product_description'):'';
         $product->product_min_quantity = $request->input('product_min_quantity')?$request->input('product_min_quantity'):0;
         $product_max_quantity = $request->input('product_max_quantity')?$request->input('product_max_quantity'):0;
+        $product->product_active = 1;
         $product->save();
 
         if ($bc = $request->input('product_barcode')){
@@ -154,6 +155,13 @@ class productsController extends Controller
     public function update(Request $request, $id)
     {
         //
+        //$listProduct = $request->
+        for ($i = 0;$i < count($listProduct);$i++) {
+            $product = Products::find($listProduct);
+            if ($product->product_active === 1) $product->product_active = 0;
+            else if ($product->product_active === 0) $product->product_active = 1;
+            $product->save();
+        }
     }
 
     /**
@@ -162,10 +170,14 @@ class productsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
         //
-
+        //$listProduct = $request->...
+        for ($i = 0;$i < count($listProduct);$i++) {
+            $product = Products::find($listProduct[$i]);
+            $product->delete();
+        }
     }
     public function productBarcode($product) {
         $arr = [];
