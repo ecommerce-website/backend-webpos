@@ -24,5 +24,17 @@ Route::group(['prefix' => 'rest/v1'], function(){
 	// Route::put('jokes/{id}', 'JokesController@update');
 	Route::resource('customer','CustomerController');
 });
+	Route::group(['prefix' => 'rest/v1'], function(){
+	// Route::put('jokes/{id}', 'JokesController@update');
+	Route::resource('customer/delete','CustomerController@destroy');
+});
+	Route::group(['prefix' => 'rest/v1'], function(){
+	// Route::put('jokes/{id}', 'JokesController@update');
+	Route::resource('customer/add','CustomerController@store');
+});
+	
+
+
+
 
 
