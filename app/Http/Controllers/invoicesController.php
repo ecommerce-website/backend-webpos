@@ -3,42 +3,48 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Invoices;
 
-class productsFilter extends Controller
+class invoicesController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
         //
-        $productsType = $request->input('product_type');
-        $productsStatus = $request->input('product_status');
-        $productsTags = $request->input('product_tag');
-        $products = Products::with(array(
-            'barcodes',
-            'qltags' => function($query){
-                $query->with('tags');
-            }
-        ))
-        ->select(
-            'product_id',
-            'product_type',
-            'product_stock_number',
-            'product_name',
-            'product_img',
-            'product_unit_string',
-            'product_unit_quantity',
-            'product_description',
-            'product_active',
-            'product_on_hand',
-            'product_retail_price'
-        )
-        ->orderBy('product_id','asc')
-        ->where('')
-        ->get();
+        $invoices = Invoices::orderBy('invoice_id','desc')->paginate(10);
+        return response()->json($this->transformCollection($invoices),200);
+    }
+
+    public function transformCollection($invoices) {
+        $invoicesToArray = $invoices->toArray();
+        return [
+            'current_page' => $invoicesToArray['current_page'],
+            'first_page_url' => $invoicesToArray['first_page_url'],
+            'last_page_url' => $invoicesToArray['last_page_url'],
+            'next_page_url' => $invoicesToArray['next_page_url'],
+            'prev_page_url' => $invoicesToArray['prev_page_url'],
+            'per_page' => $invoicesToArray['per_page'],
+            'from' => $invoicesToArray['from'],
+            'to' => $invoicesToArray['to'],
+            'total' => $invoicesToArray['total'],
+            'status' => 0,
+            'messages' => 'Return success!',
+            'data' => array_map([$this,'transform'], $invoicesToArray['data'])
+        ];
+    }
+
+    public function transform($invoice) {
+        return [
+            'invoice_id' => $invoice['invoice_id'],
+            'invoice_ref' => $invoice['invoice_ref'],
+            'invoice_date' => $invoice['created_at'],
+            'invoice_transaction_type' => $invoice['invoice_transaction_type'],
+            'invoice_status' => $invoice['invoice_status']
+        ];
     }
 
     /**

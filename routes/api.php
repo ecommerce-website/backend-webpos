@@ -43,5 +43,10 @@ Route::group(['prefix' => 'rest/v1'],function() {
 	Route::get('transactions/store','transactionController@store');
 
 	Route::get('transactionsType','transactionTypeController@index');
+
+	Route::get('invoices','invoicesController@index');
+
+	Route::get('invoices/show/{id}','invoiceController@index');
+	Route::get('invoices/update/{id}','invoiceController@update');
 });
 
