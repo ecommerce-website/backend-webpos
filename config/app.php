@@ -178,6 +178,8 @@ return [
         App\Providers\RouteServiceProvider::class,
 
 		Caffeinated\Modules\ModulesServiceProvider::class,
+        Milon\Barcode\BarcodServiceProvider::class,
+
     ],
 
     /*
@@ -227,6 +229,8 @@ return [
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
 		'Module' => Caffeinated\Modules\Facades\Module::class,
+        'DNS1D' => Milon\Barcode\Facades\DNS1DFacade::class,
+        'DNS2D' => Milon\Barcode\Facades\DNS2DFacade::class,
     ],
 
 ];

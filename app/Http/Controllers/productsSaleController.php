@@ -16,12 +16,6 @@ class productsSaleController extends Controller
             	$query->with('invoices');
             }
         ))
-        ->select(
-            'product_id',
-            'product_stock_number',
-            'product_name',
-            'product_on_hand'
-        )
         ->where('product_id',$id)
         ->get();
         return response()->json($this->transformCollection($sales),200);

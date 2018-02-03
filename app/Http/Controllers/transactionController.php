@@ -20,14 +20,7 @@ class transactionController extends Controller
             'qltransactions' => function($query) {
                 $query->with('products');
             }
-         ))
-         ->select(
-            'transaction_id',
-            'transaction_ref',
-            'transaction_date',
-            'transaction_status',
-            'transaction_user'
-        )
+        ))
         ->where('transaction_id',$id)
         ->get();
         return response()->json($this->transformCollection($transactions),200);
