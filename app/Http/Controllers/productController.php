@@ -124,7 +124,7 @@ class productController extends Controller
                 $bar = new Barcodes();
                 $bar->barcode_product_id = $id;
                 $bar->barcode_name = $product_barcodes_toArray[$i];
-                //$bar->barcode_img = 'link_img';
+                $bar->barcode_img = 'link_img';
                 $bar->save();
             }
         }
