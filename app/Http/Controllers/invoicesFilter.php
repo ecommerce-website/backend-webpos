@@ -3,30 +3,33 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Invoices;
 
-class productsFilter extends Controller
+class invoicesFilter extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index($name = null,$status = null,$dateBegin = null,$dateEnd = null) 
     {
         //
-        // $productsType = $request->input('product_type');
-        // $productsStatus = $request->input('product_status');
-        // $productsTags = $request->input('product_tag');
-        // $productNames = $request->input('product_name')?$request->input('product_name'):'';
-        // if ($productNames === '') {
-        //     $products = Products::with(array(
-        //         'barcodes',
-        //         'qltags' => function($query){
-        //             $query->with('tags');
-        //         }
-        //     ))->orderBy('product_id')->get();
+        
+        // if ($name === null && $type === null && $status === null && $dateBegin === null && $dateEnd === null) {
+        //     $invoice = Invoices::orderBy('invoice_id','desc')->paginate(10);
+        // }
+        // else {
+        //     $invoice = Invoices::orderBy('invoice_id','desc')->where([
+        //         ['invoice_ref','LIKE','%$name%'],
+        //         ['invoice_status','LIKE','%$status%']
+        //     ])
+        //     ->paginate(10);
         // }
 
+        // echo "<pre>";
+        // print_r($invoice->toArray());
+        // echo "</pre>";
     }
 
     /**

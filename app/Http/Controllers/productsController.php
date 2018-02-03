@@ -135,6 +135,7 @@ class productsController extends Controller
                 ]
             ],422);
         }
+        
         $product_id = Products::select('product_id')->max('product_id') + 1;
         $product->product_type = 'Regular product';
         $product->product_stock_number = $request->input('product_stock_number');
@@ -219,12 +220,12 @@ class productsController extends Controller
     {
         //
         //$listProduct = $request->
-        for ($i = 0;$i < count($listProduct);$i++) {
-            $product = Products::find($listProduct);
-            if ($product->product_active === 1) $product->product_active = 0;
-            else if ($product->product_active === 0) $product->product_active = 1;
-            $product->save();
-        }
+        // for ($i = 0;$i < count($listProduct);$i++) {
+        //     $product = Products::find($listProduct);
+        //     if ($product->product_active === 1) $product->product_active = 0;
+        //     else if ($product->product_active === 0) $product->product_active = 1;
+        //     $product->save();
+        // }
     }
 
     /**
@@ -237,10 +238,10 @@ class productsController extends Controller
     {
         //
         //$listProduct = $request->...
-        for ($i = 0;$i < count($listProduct);$i++) {
-            $product = Products::find($listProduct[$i]);
-            $product->delete();
-        }
+        // for ($i = 0;$i < count($listProduct);$i++) {
+        //     $product = Products::find($listProduct[$i]);
+        //     $product->delete();
+        // }
     }
     public function productBarcode($product) {
         $arr = [];

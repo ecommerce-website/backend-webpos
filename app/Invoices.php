@@ -8,6 +8,7 @@ class Invoices extends Model
 {
     //
     protected $table = 'invoices';
+    protected $primaryKey = 'invoice_id';
     public function customers() {
     	return $this->belongsTo('App\Customers','invoice_customer_id','customer_id');
     }

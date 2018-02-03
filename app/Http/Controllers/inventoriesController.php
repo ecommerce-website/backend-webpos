@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Products;
-use DB;
 
 class inventoriesController extends Controller
 {
@@ -22,15 +21,6 @@ class inventoriesController extends Controller
                 $query->with('tags');
             }
         ))
-        ->select(
-            'product_id',
-            'product_stock_number',
-            'product_name',
-            'product_unit_string',
-            'product_unit_quantity',
-            'product_on_hand',
-            'product_retail_price'
-        )
         ->orderBy('product_id','asc')
         ->get();
         return response()->json($this->transformCollection($products),200);
