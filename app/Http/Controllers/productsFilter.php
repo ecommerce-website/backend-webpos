@@ -17,28 +17,16 @@ class productsFilter extends Controller
         $productsType = $request->input('product_type');
         $productsStatus = $request->input('product_status');
         $productsTags = $request->input('product_tag');
-        $products = Products::with(array(
-            'barcodes',
-            'qltags' => function($query){
-                $query->with('tags');
-            }
-        ))
-        ->select(
-            'product_id',
-            'product_type',
-            'product_stock_number',
-            'product_name',
-            'product_img',
-            'product_unit_string',
-            'product_unit_quantity',
-            'product_description',
-            'product_active',
-            'product_on_hand',
-            'product_retail_price'
-        )
-        ->orderBy('product_id','asc')
-        ->where('')
-        ->get();
+        $productNames = $request->input('product_name')?$request->input('product_name'):'';
+        // if ($productNames === '') {
+        //     $products = Products::with(array(
+        //         'barcodes',
+        //         'qltags' => function($query){
+        //             $query->with('tags');
+        //         }
+        //     ))->orderBy('product_id')->get();
+        // }
+
     }
 
     /**
