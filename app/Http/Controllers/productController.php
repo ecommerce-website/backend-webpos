@@ -72,6 +72,7 @@ class productController extends Controller
     public function edit(Request $request,$id)
     {
         //
+        $obj = $request->
         if (!$request->input('product_stock_number') || !$request->input('product_name') || !$request->input('product_retail_price')) {
             return response()->json([
                 'error' => [
