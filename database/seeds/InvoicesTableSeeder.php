@@ -18,6 +18,7 @@ class InvoicesTableSeeder extends Seeder
         for ($i = 0;$i < 30;$i++) {
         	$invoice = Invoices::create([
         		'invoice_customer_id' => rand(1,30),
+                'invoice_user_id' => rand(1,30)
         		'invoice_total' => rand(1,100),
         		'invoice_quantity_bought' => rand(1,100),
         		'invoice_transaction_type' => $faker->word,

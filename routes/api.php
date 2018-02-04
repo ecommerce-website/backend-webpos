@@ -18,20 +18,16 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'rest/v1'], function(){
-	// Route::put('jokes/{id}', 'JokesController@update');
-	Route::resource('salesman','UserController');
-});
-	Route::group(['prefix' => 'rest/v1'], function(){
-	// Route::put('jokes/{id}', 'JokesController@update');
-	Route::resource('customer','CustomerController');
-});
-	Route::group(['prefix' => 'rest/v1'], function(){
-	// Route::put('jokes/{id}', 'JokesController@update');
-	Route::resource('customer/delete','CustomerController@destroy');
-});
-	Route::group(['prefix' => 'rest/v1'], function(){
-	// Route::put('jokes/{id}', 'JokesController@update');
-	Route::resource('customer/add','CustomerController@store');
+	
+	Route::get('salesman','UserController@index');
+
+	Route::get('customer','CustomerController@index');
+
+	Route::post('customer_delete','CustomerController@destroy');
+
+	Route::post('customer/add','CustomerController@store');
+	Route::get('customer/{id}','EditCustomerController@index');
+	Route::get('customer_search','SearchCustomerController@index');
 });
 	
 
