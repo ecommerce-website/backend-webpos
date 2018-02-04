@@ -45,25 +45,35 @@ class transactionController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        //require
+        $transaction = $request->input('transaction');
+        $transaction_type = $transaction->transaction_type;
+        $transaction_products = $transaction->transaction_product;
         $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
-        $transaction_type = $request->input('transaction_type');
-        $transaction_supplier = $request->input('transaction_supplier')?$request->input('transaction_type'):'';
-        $transaction_ref = $request->input('transaction_ref')?$request->input('transaction_ref'):'';
-        $transaction_remark = $request->input('transaction_remark')?$request->input('transaction_remark'):'SUPREC-'.strval($transaction_id);
-        //Lay ve mang product
-        //$arrProduct = $request-> ;
+        if ($transaction_type === '' || empty($transaction_product)) {
+            return response()->json([
+                'error'=>[
+                    'status'=>1
+                    'message'=>'Cung cap du thong tin!'
+                ]
+            ],422);
+        }
+        //optional
+        $transaction_supplier = $transaction->transaction_supplier;
+        $transaction_ref = $transaction->transaction_ref;
+        if ($transaction->transaction_remark === '') $transaction_remark = 'SUPREC-'.strval($transaction_id);
+        else $transaction_remark = $transaction->transaction_ref;
         
-        $transaction = new Transactions();
-        $transaction->transaction_id = $transaction_id;
-        $transaction->transaction_type = $transaction_type;
-        $transaction->transaction_ref = $transaction_ref;
-        $transaction->status = 'Posted';
-        $transaction->save();
+        $transactions = new Transactions();
+        $transactions->transaction_id = $transaction_id;
+        $transactions->transaction_type = $transaction_type;
+        $transactions->transaction_ref = $transaction_ref;
+        $transactions->status = 'Posted';
+        $transactions->save();
 
         $qlTransaction = new QLTransactions();
-        $qltransaction->ql_transactions_transaction_id = $transaction_id;
         for ($i = 0;$i < count($arrProduct);$i++) {
+            $qlTransaction->ql_transactions_transaction_id = $transaction_id;
             $qlTransaction->ql_transactions_product_id = $arrProduct['product_id'];
             $qlTransaction->ql_transactions_quantity_bought = $arrProduct['product_quantity_bought'];
             $qlTransaction->save();
@@ -90,19 +100,7 @@ class transactionController extends Controller
     public function edit($id)
     {
         //
-        $transaction = Transactions::select(
-            'transaction_id',
-            'transaction_status'
-        )
-        ->where('transaction_id',$id)
-        ->first();
-
-        if ($transaction['transaction_status'] === 'Posted') $transaction['transaction_status'] = 'Voided';
-        $transaction->save();
-        return [
-            'status' => 0,
-            'message' => 'Successful!'
-        ];
+        
     }
 
     /**
@@ -115,6 +113,14 @@ class transactionController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $transaction = Transactions::where('transaction_id',$id)
+        ->first();
+        if ($transaction['transaction_status'] === 'Posted') $transaction['transaction_status'] = 'Voided';
+        $transaction->save();
+        return [
+            'status' => 0,
+            'message' => 'Successful!'
+        ];
     }
 
     /**
@@ -141,6 +147,7 @@ class transactionController extends Controller
             'transaction_ref' => $transaction['transaction_ref'],
             'transaction_date' => $transaction['transaction_date'],
             'transaction_user' => $transaction['transaction_user'],
+            'transaction_type' => $transaction['transaction_type'],
             'qltransactions' => $this->collectQLTransaction($transaction['qltransactions'])
         ];
     }
