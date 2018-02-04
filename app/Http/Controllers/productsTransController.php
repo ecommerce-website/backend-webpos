@@ -23,17 +23,8 @@ class productsTransController extends Controller
                 }
             )
         )
-        ->select(
-            'product_id',
-            'product_name',
-            'product_on_hand',
-            'product_stock_number'
-        )
         ->where('product_id',$id)
         ->get();
-        // echo "<pre>";
-        // print_r($trans->toArray());
-        // echo "</pre>";
         return response()->json($this->transformCollection($trans),200);
     }
 
