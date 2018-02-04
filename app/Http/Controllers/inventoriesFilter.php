@@ -15,34 +15,45 @@ class inventoriesFilter extends Controller
     public function index(Request $request)
     {
         //
-        $name = $request->input('name')?$request->input('name'):'';
-        if ($name !== ''){
-            $products = Products::select(
-                'product_id',
-                'product_stock_number',
-                'product_name',
-                'product_unit_string',
-                'product_unit_quantity',
-                'product_on_hand',
-                'product_retail_price'
-            )
-            ->where('product_name','LIKE','%$name%')
+        // $productName = $request->input('product_name')?$request->input('product_name'):'';
+        $productName = '';
+
+        if ($productName !== ''){
+            $products = Products::orderBy('product_id','desc')
+            ->where('product_name','LIKE','%$productName%')
             ->get();
+            return response()->json($this->transformCollection($products),200);
         }
         else {
-             $products = Products::select(
-                'product_id',
-                'product_stock_number',
-                'product_name',
-                'product_unit_string',
-                'product_unit_quantity',
-                'product_on_hand',
-                'product_retail_price'
-            )
+             $products = Products::orderBy('product_id','desc')
             ->get();
+            return response()->json($this->transformCollection($products),200);
         }
-        return response()->json($this->transformCollection($products),200);
+
+        
        
+    }
+    public function transformCollection($products) {
+        //Chuyển truy vấn dạng object thành mảng
+        $productsToArray = $products->toArray();
+        return [    
+            'status' => 0,
+            'messages' => 'Return success!',
+            'data' => array_map([$this,'transformData'],$productsToArray)
+        ];
+    }
+    public function transformData($products) {
+        //$show = json_decode(json_encode($products));
+        //Trả về định dạng cho dữ liệu
+        return [
+            'product_id' => $products['product_id'],
+            'product_stock_number' => $products['product_stock_number'],
+            'product_name' => $products['product_name'],
+            'product_unit_string' => $products['product_unit_string'],
+            'product_unit_quantity' => $products['product_unit_quantity'],
+            'product_on_hand' => $products['product_on_hand'],
+            'product_retail_price' => $products['product_retail_price']
+        ];
     }
 
     /**

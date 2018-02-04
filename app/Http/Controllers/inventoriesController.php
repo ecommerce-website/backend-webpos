@@ -110,7 +110,7 @@ class inventoriesController extends Controller
             'product_unit_string' => $products['product_unit_string'],
             'product_unit_quantity' => $products['product_unit_quantity'],
             'product_on_hand' => $products['product_on_hand'],
-            'product_retail_price' => $products['product_retail_price'],
+            'product_retail_price' => $products['product_retail_price']
         ];
     }
 }
