@@ -118,7 +118,6 @@ class EditCustomerController extends Controller
         $show = json_decode(json_encode($customer));
         return [
             'customer_id' => $customer['customer_id'],
-            'customer_group_id' => $customer['customer_group_id'],
             'customer_fname' => $customer['customer_fname'],
             'customer_lname' => $customer['customer_lname'],
             'customer_gender' => $customer['customer_gender'],

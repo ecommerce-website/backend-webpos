@@ -27,6 +27,7 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 	// Route::post('store','productsController@store');
 	// Route::post('delete','productsController@destroy');
 	// Route::post('active','productsController@update');
+
 });
 Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
 	Route::get('/','inventoriesController@index');
@@ -47,6 +48,14 @@ Route::group(['prefix' => 'rest/v1/invoices'],function(){
 });
 
 Route::group(['prefix' => 'rest/v1'], function(){
+	// Route::put('jokes/{id}', 'JokesController@update');
+	Route::resource('salesman','UserController');
+
+});
+
+
+
+Route::group(['prefix' => 'rest/v1'], function(){
 	
 	Route::get('salesman','UserController@index');
 
@@ -58,4 +67,5 @@ Route::group(['prefix' => 'rest/v1'], function(){
 	Route::get('customer/{id}','EditCustomerController@index');
 	Route::get('customer_search','SearchCustomerController@index');
 });
+
 	
