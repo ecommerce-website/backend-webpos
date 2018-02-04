@@ -16,7 +16,7 @@ class inventoriesFilter extends Controller
     {
         //
         $productName = $request->input('product_name')?$request->input('product_name'):'';
-
+        $productName = strtolower($productName);
         if ($productName !== ''){
             $products = Products::orderBy('product_id','desc')
             ->where('product_name','LIKE','%'.$productName.'%')

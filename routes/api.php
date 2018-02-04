@@ -28,7 +28,7 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 	// Route::post('delete','productsController@destroy');
 	// Route::post('active','productsController@update');
 });
-Route::group(['prefix' => 'rest/v1/inventories'],function(){
+Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
 	Route::get('/','inventoriesController@index');
 	Route::get('filter','inventoriesFilter@index');
 });

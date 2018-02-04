@@ -123,7 +123,7 @@ class invoiceController extends Controller
     {
         //
         $invoice = Invoices::where('invoice_id',$id)->first();
-        $invoice->invoice_status = 'Voided';
+        if ($invoice->invoice_status === 'Posted') $invoice->invoice_status = 'Voided';
         $invoice->save();
         return [
             'status' => 0,

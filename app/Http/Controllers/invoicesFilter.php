@@ -12,24 +12,53 @@ class invoicesFilter extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index($name = null,$status = null,$dateBegin = null,$dateEnd = null) 
+    public function index(Request $request) 
     {
         //
-        
-        // if ($name === null && $type === null && $status === null && $dateBegin === null && $dateEnd === null) {
-        //     $invoice = Invoices::orderBy('invoice_id','desc')->paginate(10);
-        // }
-        // else {
-        //     $invoice = Invoices::orderBy('invoice_id','desc')->where([
-        //         ['invoice_ref','LIKE','%$name%'],
-        //         ['invoice_status','LIKE','%$status%']
-        //     ])
-        //     ->paginate(10);
-        // }
-
-        // echo "<pre>";
-        // print_r($invoice->toArray());
-        // echo "</pre>";
+        $invoice = $request->input('invoice');
+        $invoiceName = $invoice->invoice_name;
+        $invoiceStatus = $invoice->invoice_status;
+        $invoiceDateBegin = $invoice->invoice_date_begin;
+        $invoiceDateEnd = $invoice->invoice_date_end;
+        if ($invoiceName === null && $invoiceStatus === null && $dateBegin === null && $dateEnd === null) {
+            $invoices = Invoices::orderBy('invoice_id','desc')->paginate(10);
+            return response()->json($this->transformCollection($invoices),200);
+        }
+        else {
+            $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                ['invoice_ref','LIKE','%'.$invoieName.'%'],
+                ['invoice_status','LIKE','%'.$status.'%'],
+                ['invoice_date_begin','<','invoice_date_end']
+            ])
+            ->paginate(10);
+            return response()->json($this->transformCollection($invoices),200);
+        }
+    }
+    public function transformCollection($invoices) {
+        $invoicesToArray = $invoices->toArray();
+        return [
+            'current_page' => $invoicesToArray['current_page'],
+            'first_page_url' => $invoicesToArray['first_page_url'],
+            'last_page_url' => $invoicesToArray['last_page_url'],
+            'next_page_url' => $invoicesToArray['next_page_url'],
+            'prev_page_url' => $invoicesToArray['prev_page_url'],
+            'per_page' => $invoicesToArray['per_page'],
+            'from' => $invoicesToArray['from'],
+            'to' => $invoicesToArray['to'],
+            'total' => $invoicesToArray['total'],
+            'status' => 0,
+            'messages' => 'Return success!',
+            'data' => array_map([$this,'transform'], $invoicesToArray['data'])
+        ];
+    }
+    public function transform($invoice) {
+        return [
+            'invoice_id' => $invoice['invoice_id'],
+            'invoice_ref' => $invoice['invoice_ref'],
+            'invoice_date' => $invoice['created_at'],
+            'invoice_transaction_type' => $invoice['invoice_transaction_type'],
+            'invoice_status' => $invoice['invoice_status']
+        ];
     }
 
     /**
