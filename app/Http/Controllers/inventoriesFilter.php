@@ -15,12 +15,11 @@ class inventoriesFilter extends Controller
     public function index(Request $request)
     {
         //
-        // $productName = $request->input('product_name')?$request->input('product_name'):'';
-        $productName = '';
+        $productName = $request->input('product_name')?$request->input('product_name'):'';
 
         if ($productName !== ''){
             $products = Products::orderBy('product_id','desc')
-            ->where('product_name','LIKE','%$productName%')
+            ->where('product_name','LIKE','%'.$productName.'%')
             ->get();
             return response()->json($this->transformCollection($products),200);
         }
