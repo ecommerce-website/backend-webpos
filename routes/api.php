@@ -37,13 +37,13 @@ Route::group(['prefix' => 'rest/v1/transactions'],function(){
 	Route::get('show/{id}','transactionController@index');
 	Route::get('update/{id}','transactionController@edit');
 	Route::get('store','transactionController@store');
-	Route::get('transactionsType','transactionTypeController@index');
+	Route::get('transactionType','transactionTypeController@index');
 });
 Route::group(['prefix' => 'rest/v1/invoices'],function(){
 	Route::get('/','invoicesController@index');
 	Route::get('show/{id}','invoiceController@index');
-	Route::get('update/{id}','invoiceController@update');
-	// Route::get('filter','invoicesFilter@index');
+	Route::post('update/{id}','invoiceController@update');
+	Route::get('filter','invoicesFilter@index');
 });
 
 Route::group(['prefix' => 'rest/v1'], function(){

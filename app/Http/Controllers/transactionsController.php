@@ -15,14 +15,7 @@ class transactionsController extends Controller
     public function index()
     {
         //
-        $transactions = Transactions::select(
-            'transaction_id',
-            'transaction_ref',
-            'transaction_date',
-            'transaction_type',
-            'transaction_status',
-            'transaction_user'
-        )
+        $transactions = Transactions::orderBy('transaction_id','desc')
         ->paginate(10);
         return response()->json($this->transformCollection($transactions),200);
     }
@@ -114,6 +107,7 @@ class transactionsController extends Controller
             'transaction_date' => $transactions['transaction_date'],
             'transaction_type' => $transactions['transaction_type'],
             'transaction_date' => $transactions['transaction_date'],
+            'transaction_status' => $transactions['transaction_status'],
             'transaction_user' => $transactions['transaction_user']
         ];
     }
