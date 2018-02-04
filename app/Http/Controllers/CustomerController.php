@@ -19,7 +19,6 @@ class CustomerController extends Controller
         $customer = Customer::orderBy('customer_id','asc')
         ->select(
             'customer_id',
-            'customer_group_id',
             'customer_fname',
             'customer_lname',
             'customer_gender',
@@ -68,7 +67,6 @@ class CustomerController extends Controller
 
        }
        $customer_id = Customer::select('customer_id')->max('customer_id')+1;
-       $customer->customer_group_id->input('customer_group_id');
        $customer->customer_fname->input('customer_fname');
        $customer->customer_lname->input('customer_lname');
        $customer->customer_gender->input('customer_gender');
@@ -161,7 +159,6 @@ class CustomerController extends Controller
         $show = json_decode(json_encode($customer));
         return [
             'customer_id' => $customer['customer_id'],
-            'customer_group_id' => $customer['customer_group_id'],
             'customer_fname' => $customer['customer_fname'],
             'customer_lname' => $customer['customer_lname'],
             'customer_gender' => $customer['customer_gender'],
