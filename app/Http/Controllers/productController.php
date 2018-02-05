@@ -72,8 +72,11 @@ class productController extends Controller
     public function edit(Request $request,$id)
     {
         //
-        $obj = $request->
-        if (!$request->input('product_stock_number') || !$request->input('product_name') || !$request->input('product_retail_price')) {
+        $obj = $request->input('product');
+        $product_stock_number = $obj->product_stock_number;
+        $product_name = $obj->product_name;
+        $product_retail_price = $obj->product_retail_price;
+        if ($product_stock_number === '' && $product_name === '' && $product_retail_price === '') {
             return response()->json([
                 'error' => [
                     'status' => 1,
@@ -81,26 +84,21 @@ class productController extends Controller
                 ]
             ],422);
         }
+        //option
+        $product_cost = $obj->product_cost;
+        $product_description = $obj->product_description;
+        $product_min_quantity = $obj->product_min_quantity;
+        $product_max_quantity = $obj->product_max_quantity;
+        $product_barcodes = $obj->product_barcodes;
+        $product_tags = $obj->product_tags;
 
-        $product_stock_number = $request->input('product_stock_number');
-        $product_name = $request->input('product_name');
-        $product_retail_price = $request->input('product_retail_price');
-        $product_cost = $request->input('product_cost');
-        $product_description = $request->input('product_description');
-        $product_min_quantity = $request->input('product_min_quantity');
-        $product_max_quantity = $request->input('product_max_quantity');
-
-        $product_barcodes = $request->input('product_barcodes');
         $product_barcodes_toArray = explode(",", $product_barcodes);
-
-        $product_tags = $request->input('product_tags');
         $product_tags_toArray = explode(",", $product_tags);
 
-        $product = Products::where('product_id',$id)
-        ->get();
+        $product = Products::where('product_id',$id)->get();
         $barcode = Barcodes::get()->toArray();
-        $tag = Tags::get()->toArray();
-        $qltag = new QLTags();
+        $tag     = Tags::get()->toArray();
+        $qltag   = new QLTags();
 
         $product->product_stock_number = $product_stock_number;
         $product->product_name = $product_name;
@@ -112,7 +110,6 @@ class productController extends Controller
         $product->save();
 
         $qltag->ql_tags_product_id = $id;
-
         for ($i = 0;$i < count($product_barcodes_toArray);$i++) {
             $temp = true;
             for ($j = 0;$j < count($barcode);$j++) {

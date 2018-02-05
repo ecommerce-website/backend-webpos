@@ -36,11 +36,11 @@ class productsUnitController extends Controller
     {
         //
         $productUnit = $request->input('product_unit');
-        $productUnitArray = explode('-', $productUnit);
+        $productArray = explode('-', $product);
         $getProduct = Products::where('product_id',$id)->get()->toArray();
         $product = new Products();
 
-        $product->product_type = 'Unit product';
+        $product->product_type = 'Unit Product';
         $product->product_unit_string = $productUnitArray[0];
         $product->product_unit_quantity = (int)$productUnitArray[1];
         $product->product_stock_number = $getProduct['product_stock_number'].'-'.$product->product_unit_string;
