@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Invoices;
 
-class invoicesFilter extends Controller
+class invoiceFilter extends Controller
 {
     /**
      * Display a listing of the resource.
