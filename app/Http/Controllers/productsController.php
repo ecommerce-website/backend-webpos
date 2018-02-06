@@ -129,7 +129,7 @@ class productsController extends Controller
         $product = new Products;
         $products = $request->input('product');
         
-        if () {
+        if ($product->product_stock_number === '' && $product->product_name === '' && $product->product_retail_price === '') {
             return Response::json([
                 'error' => [
                     'status' => 1,
@@ -158,7 +158,6 @@ class productsController extends Controller
         $product_barcodes = $products->product_barcodes;
         $listBarcode = explode(',',$product_barcodes);
         if (!empty($listBarcode)){
-            $listBc = explode(',', $product_barcodes);
             for ($i = 0;$i < count($listBc);$i++) {
                 $barcode = new Barcodes;
                 $barcode->barcode_product_id = $product_id;
