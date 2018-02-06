@@ -129,7 +129,7 @@ class productsController extends Controller
         $product = new Products;
         $products = $request->input('product');
         
-        if ($product->product_stock_number === '' && $product->product_name === '' && $product->product_retail_price === '') {
+        if ($products->product_stock_number === '' && $products->product_name === '' && $products->product_retail_price === '') {
             return Response::json([
                 'error' => [
                     'status' => 1,
