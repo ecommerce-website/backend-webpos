@@ -178,7 +178,7 @@ return [
         App\Providers\RouteServiceProvider::class,
 
 		Caffeinated\Modules\ModulesServiceProvider::class,
-        Milon\Barcode\BarcodeServiceProvider::class,
+
 
     ],
 

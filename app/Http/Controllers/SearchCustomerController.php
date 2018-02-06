@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Customer;
+use Carbon\Carbon;
 
 class SearchCustomerController extends Controller
 {
@@ -11,46 +13,25 @@ class SearchCustomerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $name = $request->input('name')?$request->input('name');
-        if($name !== ''){
-            $customer = SearchCustomer::select(
-                'customer_id',
-                'customer_group_id',
-                'customer_fname',
-                'customer_lname',
-                'customer_gender',
-                'customer_email',
-                'customer_city',
-                'customer_mobile',
-                'customer_telephone',
-                'customer_street',
-                'customer_address',
-                'customer_note',
-                'customer_birthday'
-
-            )
-            =>where('customer_lname','LIKE','%name%');
-            =>get();
+        $customerName = $request->input('customerName');
+        // $customerdemo = "pham mai";
+        $customer_telephone = $request->input('customerTelephone');
+        $customerN = explode(" ", $customerdemo);
+        $customer_fname =  $customerN[0];
+        $customer_lname = $customerN[1];
+        echo $customer_fname;
+       
+         if ($customerName === null  || $customer_telephone === null) {
+               $customer = Customer::orderBy('customer_id','desc')->paginate(10);
+            return response()->json($this->transformCollection($customer),200);
         }
-        else{
-            $customer = SearchCustomer::select(
-                'customer_id',
-                'customer_group_id',
-                'customer_fname',
-                'customer_lname',
-                'customer_gender',
-                'customer_email',
-                'customer_city',
-                'customer_mobile',
-                'customer_telephone',
-                'customer_street',
-                'customer_address',
-                'customer_note',
-                'customer_birthday'
-            )
-            =>get();
+        else {
+            $customer = Customer::orderBy('customer_id','desc')->where([['customer_fname','LIKE','%'.$customer_fname.'%'],['customer_lname','LIKE','%'.$customer_lname.'%'],['customer_telephone','LIKE','%'.$customer_telephone.,'%']
+            ])
+            ->paginate(10);
+            return response()->json($this->transformCollection($customer),200);
         }
          return response()->json($this->transformCollection($customer),200);
     }

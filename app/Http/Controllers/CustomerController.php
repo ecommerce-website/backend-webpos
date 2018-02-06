@@ -19,7 +19,6 @@ class CustomerController extends Controller
         $customer = Customer::orderBy('customer_id','asc')
         ->select(
             'customer_id',
-            'customer_group_id',
             'customer_fname',
             'customer_lname',
             'customer_gender',
@@ -56,31 +55,30 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-       // $customer = new Customer;
-       // if(!$request=>input('customer_fname')||
-       //    !$request=>input('customer_lname')){
-       //  return Response::json([
-       //      'error' => [
-       //          'status'=>1,
-       //          'message'=>'Hãy điền đầy đủ tên'
-       //          ]
-       //      ],422);
+       $customer = new Customer;
+       if(!$request->input('customer_fname')||
+          !$request->input('customer_lname')){
+        return Response::json([
+            'error' => [
+                'status'=>1,
+                'message'=>'Hãy điền đầy đủ thông tin'
+                ]
+            ],422);
 
-       // }
-       // $customer_id = Customer::select('customer_id')=>max('customer_id')+1;
-       // $customer=>customer_group_id=>input('customer_group_id');
-       // $customer=>customer_fname=>input('customer_fname');
-       // $customer=>customer_lname=>input('customer_lname');
-       // $customer=>customer_gender=>input('customer_gender');
-       // $customer=>customer_email=>input('customer_email');
-       // $customer=>customer_city=>input('customer_city');
-       // $customer=>customer_mobile=>input('customer_mobile');
-       // $customer=>customer_telephone=>input('customer_telephone');
-       // $customer=>customer_street=>input('customer_street');
-       // $customer=>customer_address=>input('customer_address');
-       // $customer=>customer_note=>input('customer_note');
-       // $customer=>customer_birthday=>input('customer_birthday');
-       // $customer=>save();
+       }
+       $customer_id = Customer::select('customer_id')->max('customer_id')+1;
+       $customer->customer_fname->input('customer_fname');
+       $customer->customer_lname->input('customer_lname');
+       $customer->customer_gender->input('customer_gender');
+       $customer->customer_email->input('customer_email');
+       $customer->customer_city->input('customer_city');
+       $customer->customer_mobile->input('customer_mobile');
+       $customer->customer_telephone->input('customer_telephone');
+       $customer->customer_street->input('customer_street');
+       $customer->customer_address->input('customer_address');
+       $customer->customer_note->input('customer_note');
+       $customer->customer_birthday->input('customer_birthday');
+       $customer->save();
     }
 
     /**
@@ -134,10 +132,10 @@ class CustomerController extends Controller
      */
     public function destroy($id)
     {
-        // for ($i = 0;$i < count($listProduct);$i++) {
-        //     $product = Products::find($listProduct[$i]);
-        //     $product->delete();
-        // }
+        for ($i = 0;$i < count($listProduct);$i++) {
+            $product = Products::find($listProduct[$i]);
+            $product->delete();
+        }
     }
      public function transformCollection($customer) {
         $customerToArray = $customer->toArray();
@@ -161,7 +159,6 @@ class CustomerController extends Controller
         $show = json_decode(json_encode($customer));
         return [
             'customer_id' => $customer['customer_id'],
-            'customer_group_id' => $customer['customer_group_id'],
             'customer_fname' => $customer['customer_fname'],
             'customer_lname' => $customer['customer_lname'],
             'customer_gender' => $customer['customer_gender'],
