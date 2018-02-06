@@ -46,7 +46,7 @@ Route::group(['prefix' => 'rest/v1/invoices'],function(){
 	Route::get('/','invoicesController@index');
 	Route::get('show/{id}','invoiceController@index');
 	Route::post('update/{id}','invoiceController@update');
-	Route::get('filter','invoicesFilter@index');
+	Route::get('filter','invoiceFilter@index');
 });
 
 Route::group(['prefix' => 'rest/v1'], function(){

@@ -53,7 +53,7 @@ class transactionController extends Controller
         if ($transaction_type === '' || empty($transaction_product)) {
             return response()->json([
                 'error'=>[
-                    'status'=>1
+                    'status'=>1,
                     'message'=>'Cung cap du thong tin!'
                 ]
             ],422);

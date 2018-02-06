@@ -28,8 +28,7 @@ class SearchCustomerController extends Controller
             return response()->json($this->transformCollection($customer),200);
         }
         else {
-            $customer = Customer::orderBy('customer_id','desc')->where([['customer_fname','LIKE','%'.$customer_fname.'%'],['customer_lname','LIKE','%'.$customer_lname.'%'],['customer_telephone','LIKE','%'.$customer_telephone.,'%']
-            ])
+            $customer = Customer::orderBy('customer_id','desc')->where([['customer_fname','LIKE','%'.$customer_fname.'%'],['customer_lname','LIKE','%'.$customer_lname.'%'],['customer_telephone','LIKE','%'.$customer_telephone.'%']])
             ->paginate(10);
             return response()->json($this->transformCollection($customer),200);
         }
