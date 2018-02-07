@@ -70,6 +70,7 @@ Route::group(['prefix' => 'rest/v1'], function(){
 	Route::get('customer_search','SearchCustomerController@index');
 	Route::post('insert','AddInvoiceController@postInvoice');
 	Route::get('saleman/{id}','SalemanController@index');
+	Route::get('saleman','UserController@index');
 	Route::post('edit_customer/{id}','EditCustomerController@edit');
 });
 

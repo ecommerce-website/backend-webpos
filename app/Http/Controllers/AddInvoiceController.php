@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Invoices;
 use Carbon\Carbon;
+use DB;
 
 class AddInvoiceController extends Controller
 {
@@ -20,7 +21,7 @@ class AddInvoiceController extends Controller
     public function postInvoice(Request $request){
 
         $qlinvoice = $request->input('qlinvoice');
-        var_dump($qlinvoice['invoice_user_id']);die();
+       // var_dump($qlinvoice['invoice_user_id']);die();
         $invoice_user_id = $qlinvoice['invoice_user_id'];
         $invoice_customer_id = $qlinvoice['invoice_customer_id'];
         $invoice_total = $qlinvoice['invoice_total'];
@@ -28,14 +29,15 @@ class AddInvoiceController extends Controller
         $invoice_remark = $qlinvoice['invoice_remark'];
         $invoice_date = $qlinvoice['invoice_date'];
 
-        $id_invoice = DB::table('invoices')->max('invoice_id')+1; 
-        $ql_invoices_id = DB::table('ql_invoices')->max('ql_invoices_id')+1;
         $ql_invoices_discount = $qlinvoice['ql_invoices_discount'];
-        $ql_invoice_product_id = $qlinvoice['ql_invoice_product_id'];
-        $ql_invoice_quantity_bought = $qlinvoice['ql_invoice_quantity_bought'];
+      
+        $ql_invoices_product_id = $qlinvoice['ql_invoices_product_id'];
+        // var_dump($ql_invoices_product_id);die();
+        $ql_invoices_quantity_bought = $qlinvoice['ql_invoices_quantity_bought'];
+
+       // var_dump($qlinvoice);die();
 
         $arr1 = [
-        'invoice_id' => $id_invoice,
         'invoice_user_id'=> $invoice_user_id,
         'invoice_customer_id' =>  $invoice_customer_id,
         'invoice_total' => $invoice_total,
@@ -43,17 +45,20 @@ class AddInvoiceController extends Controller
         'invoice_remark' => $invoice_remark,
         'invoice_date' => $invoice_date,
         ];
-        DB::table('invoice')->insert($arr1);
+        DB::table('invoices')->insert($arr1);
 
-        for($i=0;$i<count($ql_invoice_product_id);$i++){
+        $id_invoice = DB::table('invoices')->max('invoice_id');
+
+       // var_dump($ql_invoices_product_id[0]["id"]);die();
+
+        for($i=0;$i<count($ql_invoices_product_id);$i++){
             $arr2 = [
-            'ql_invoices_id' => $ql_invoices_id,
-            'ql_invoices_discount' => $ql_invoices_discount,
             'ql_invoices_invoice_id' => $id_invoice,
-            'ql_invoice_product_id' => $ql_invoice_product_id[$i],
-            'ql_invoice_quantity_bought' => $ql_invoice_quantity_bought[$i],
-
+            'ql_invoices_product_id' => $ql_invoices_product_id[$i]["id"],
+            'ql_invoices_quantity_bought' => $ql_invoices_quantity_bought[$i]["id"],     
+            'ql_invoices_discount' => $ql_invoices_discount[$i]["id"],
             ];
+          //  var_dump($arr2);die();
             DB::table('ql_invoices')->insert($arr2);
         }
     }
