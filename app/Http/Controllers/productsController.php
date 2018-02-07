@@ -138,7 +138,7 @@ class productsController extends Controller
             ],422);
         }
         $product->product_stock_number = $products->product_stock_number;
-        $product->product_name = $rproducts->product_name;
+        $product->product_name = $products->product_name;
         $product->product_retail_price = $products->product_retail_price;
         $product_id = Products::select('product_id')->max('product_id') + 1;
         $product->product_type = 'Regular product';

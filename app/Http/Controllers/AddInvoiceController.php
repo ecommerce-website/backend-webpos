@@ -20,21 +20,22 @@ class AddInvoiceController extends Controller
     public function postInvoice(Request $request){
 
         $qlinvoice = $request->input('qlinvoice');
-        $invoice_user_id = $qlinvoice->invoice_user_id;
-        $invoice_customer_id = $qlinvoice->invoice_customer_id;
-        $invoice_total = $qlinvoice->invoice_total;
-        $invoice_quantity_bought = $qlinvoice->invoice_quantity_bought;
-        $invoice_remark = $qlinvoice->invoice_remark;
-        $invoice_date = $qlinvoice->invoice_date;
+        var_dump($qlinvoice['invoice_user_id']);die();
+        $invoice_user_id = $qlinvoice['invoice_user_id'];
+        $invoice_customer_id = $qlinvoice['invoice_customer_id'];
+        $invoice_total = $qlinvoice['invoice_total'];
+        $invoice_quantity_bought = $qlinvoice['invoice_quantity_bought'];
+        $invoice_remark = $qlinvoice['invoice_remark'];
+        $invoice_date = $qlinvoice['invoice_date'];
 
         $id_invoice = DB::table('invoices')->max('invoice_id')+1; 
         $ql_invoices_id = DB::table('ql_invoices')->max('ql_invoices_id')+1;
-        $ql_invoices_discount = $qlinvoice->ql_invoices_discount;
-        $ql_invoice_product_id = $qlinvoice->ql_invoice_product_id;
-        $ql_invoice_quantity_bought = $qlinvoice->ql_invoice_quantity_bought;
+        $ql_invoices_discount = $qlinvoice['ql_invoices_discount'];
+        $ql_invoice_product_id = $qlinvoice['ql_invoice_product_id'];
+        $ql_invoice_quantity_bought = $qlinvoice['ql_invoice_quantity_bought'];
 
         $arr1 = [
-        'invoice_id' => $id,
+        'invoice_id' => $id_invoice,
         'invoice_user_id'=> $invoice_user_id,
         'invoice_customer_id' =>  $invoice_customer_id,
         'invoice_total' => $invoice_total,
@@ -48,9 +49,9 @@ class AddInvoiceController extends Controller
             $arr2 = [
             'ql_invoices_id' => $ql_invoices_id,
             'ql_invoices_discount' => $ql_invoices_discount,
-            'ql_invoices_invoice_id' => $id,
+            'ql_invoices_invoice_id' => $id_invoice,
             'ql_invoice_product_id' => $ql_invoice_product_id[$i],
-            'ql_invoice_quantity_bought' => $ql_invoice_quantity_bought,
+            'ql_invoice_quantity_bought' => $ql_invoice_quantity_bought[$i],
 
             ];
             DB::table('ql_invoices')->insert($arr2);
