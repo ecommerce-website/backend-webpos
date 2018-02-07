@@ -8,6 +8,7 @@ use App\Barcodes;
 use App\Tags;
 use App\QLTags;
 use DB;
+use \Milon\Barcode\DNS1D;
 
 class productsController extends Controller
 {
@@ -128,8 +129,8 @@ class productsController extends Controller
         //
         $product = new Products;
         $products = $request->input('product');
-        
-        if ($product->product_stock_number === '' && $product->product_name === '' && $product->product_retail_price === '') {
+
+        if ($products["product_stock_number"] === '' && $products["product_name"] === '' && $products["product_retail_price"] === '') {
             return Response::json([
                 'error' => [
                     'status' => 1,
@@ -137,37 +138,38 @@ class productsController extends Controller
                 ]
             ],422);
         }
-        $product->product_stock_number = $products->product_stock_number;
-        $product->product_name = $rproducts->product_name;
-        $product->product_retail_price = $products->product_retail_price;
+        $product->product_stock_number = $products["product_stock_number"];
+        $product->product_name = $products["product_name"];
+        $product->product_retail_price = $products["product_retail_price"];
         $product_id = Products::select('product_id')->max('product_id') + 1;
         $product->product_type = 'Regular product';
         $product->product_unit_string = 'PC';
         $product->product_unit_quantity = 1;
-        if ($products->product_cost === '') $product->product_cost = intval($products->product_cost);
+        if ($products["product_cost"] === '') $product->product_cost = intval($products["product_cost"]);
         else $product->product_cost = 0;
 
-        if ($products->product_min_quantity === '') $product->product_min_quantity = intval($products->product_min_quantity);
+        if ($products["product_min_quantity"] === '') $product->product_min_quantity = intval($products["product_min_quantity"]);
         else $product->product_min_quantity = 0;
-        if ($products->product_max_quantity === '') $product->product_max_quantity = intval($products->product_max_quantity);
+        if ($products["product_max_quantity"] === '') $product->product_max_quantity = intval($products["product_max_quantity"]);
         else $product->product_max_quantity = 0;
-        $product->description = $products->description;
+        $product->product_description = $products["product_description"];
         $product->product_active = 1;
         $product->save();
 
-        $product_barcodes = $products->product_barcodes;
+        $product_barcodes = $products["product_barcodes"];
         $listBarcode = explode(',',$product_barcodes);
         if (!empty($listBarcode)){
-            for ($i = 0;$i < count($listBc);$i++) {
+            for ($i = 0;$i < count($listBarcode);$i++) {
                 $barcode = new Barcodes;
                 $barcode->barcode_product_id = $product_id;
-                $barcode->barcode_name = $listBc[$i];
+                $barcode->barcode_name = $listBarcode[$i];
+                $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C39+");
                 $barcode->save();
             }
         }
 
-        $product_tags = $products->product_tags;
-        $listTag = explode(',', $products_tag);
+        $product_tags = $products["product_tags"];
+        $listTag = explode(',', $product_tags);
         $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
         for ($i = 0;$i < count($listTag);$i++) {
             $t = false;
@@ -188,8 +190,8 @@ class productsController extends Controller
             $qltag = new QLTags;
             $qltag->ql_tags_product_id = $product_id;
             if ($t) $qltag->ql_tags_tag_id = $tag_id;
-            else $qltags->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
-            $qltags->save();
+            else $qltag->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
+            $qltag->save();
         }
     }
 
