@@ -129,8 +129,13 @@ class productsController extends Controller
         //
         $product = new Products;
         $products = $request->input('product');
+<<<<<<< HEAD
 
         if ($products["product_stock_number"] === '' && $products["product_name"] === '' && $products["product_retail_price"] === '') {
+=======
+        
+        if ($products->product_stock_number === '' && $products->product_name === '' && $products->product_retail_price === '') {
+>>>>>>> 3003d429c02f2ac3e7a4d8baf04132acb49ce897
             return Response::json([
                 'error' => [
                     'status' => 1,
