@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Invoices;
 
-class invoicesFilter extends Controller
+class invoiceFilter extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -25,13 +24,48 @@ class invoicesFilter extends Controller
             return response()->json($this->transformCollection($invoices),200);
         }
         else {
-            $invoices = Invoices::orderBy('invoice_id','desc')->where([
-                ['invoice_ref','LIKE','%'.$invoieName.'%'],
-                ['invoice_status','LIKE','%'.$status.'%'],
-                ['invoice_date_begin','<','invoice_date_end']
-            ])
-            ->paginate(10);
-            return response()->json($this->transformCollection($invoices),200);
+            if ($invoiceDateBegin == null) {
+                if ($invoiceDateEnd == null) {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoieName.'%'],
+                                    ['invoice_status','LIKE','%'.$status.'%']
+                                ])
+                                ->paginate(10);
+                    return response()->json($this->transformCollection($invoices),200);
+                }
+                else {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoiceName.'%'],
+                                    ['invoice_status','LIKE','%'.$invoiceStatus.'%']
+                                ])
+                                ->whereDate('created_at','<=','%'.$invoiceDateEnd.'%d')
+                                ->paginate(10);
+                    return response()->json($this->transformCollection($invoices),200);
+                }
+            }
+            else {
+                if ($invoiceDateEnd == null) {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoiceName.'%'],
+                                    ['invoice_status','LIKE','%'.$invoiceStatus.'%']
+                                ])
+                                ->whereDate('created_at','>=','%'.$invoiceDateBegin.'%d')
+                                ->paginate(10);
+                    return response()->json($this->transformCollection($invoices),200);
+                }
+                else {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoiceName.'%'],
+                                    ['invoice_status','LIKE','%'.$invoiceStatus.'%']
+                                ])
+                                ->whereDate([
+                                    ['created_at','<=','%'.$invoiceDateEnd.'%d'],
+                                    ['created_at','>=','%'.$invoiceDateBegin.'%d']
+                                ])
+                                ->paginate(10);
+                    return response()->json($this->transformCollection($invoices),200);
+                }
+            }
         }
     }
     public function transformCollection($invoices) {

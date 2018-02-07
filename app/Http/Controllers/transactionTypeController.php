@@ -15,12 +15,8 @@ class transactionTypeController extends Controller
     public function index()
     {
         //
-        $transactionParRef = Transactions::select(
-            'transaction_id',
-            'transaction_type',
-            'transaction_ref'
-        )
-        ->where('transaction_type','Receive from Supplier')
+        $transactionParRef = Transactions::orderBy('transaction_id','asc')
+        ->where('transaction_type','Receive From Supplier')
         ->get();
         return response()->json($this->transformCollection($transactionParRef),200);
     }

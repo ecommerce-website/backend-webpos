@@ -14,7 +14,7 @@ class inventoriesFilter extends Controller
      */
     public function index(Request $request)
     {
-        //
+        //invoice filter
         $productName = $request->input('product_name')?$request->input('product_name'):'';
         $productName = strtolower($productName);
         if ($productName !== ''){

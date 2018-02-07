@@ -4,16 +4,29 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class productsUnitController extends Controller
+class transactionProductSearch extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         //
+        $transactionProduct = $request->input('transaction_product');
+        $transaction_product_name = $transactionProduct->transaction_product_name;
+        $transaction_product_barcode = $transactionProduct->transaction_product_barcode;
+        $transaction_product_stock_number = $transactionProduct->transaction_product_stock_number;
+        $product = Products::where([
+            ['product_name','LIKE','%'.$transaction_product_name.'%'],
+            ['product_barcode','LIKE','%'.$transaction_product_barcode.'%'],
+            ['product_stock_number','LIKE','%'.$transaction_product_stock_number.'%']
+        ])->get();
+        return respones()->json($this->transformCollection($product),200);
+    }
+    public function transformCollection($product) {
+
     }
 
     /**
@@ -32,27 +45,9 @@ class productsUnitController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request,$id)
+    public function store(Request $request)
     {
         //
-        $productUnit = $request->input('product_unit');
-        $productArray = explode('-', $product);
-        $getProduct = Products::where('product_id',$id)->get()->toArray();
-        $product = new Products();
-
-        $product->product_type = 'Unit Product';
-        $product->product_unit_string = $productUnitArray[0];
-        $product->product_unit_quantity = (int)$productUnitArray[1];
-        $product->product_stock_number = $getProduct['product_stock_number'].'-'.$product->product_unit_string;
-        $product->product_retail_price = $getProduct['product_retail_price'] * $product->product_unit_quantity;
-        $product->product_on_hand = 0;
-        $product->product_description = $getProduct['product_description'];
-        $product->product_name = $getProduct['product_name'];
-        $product->prouct_cost = $getProduct['product_cost'] * $product->product_unit_quantity;
-        $product->product_min_quantity = $getProduct['product_min_quantity'];
-        $product->product_max_quantity = $getProduct['product_max_quantity'];
-
-        $product->save();
     }
 
     /**
