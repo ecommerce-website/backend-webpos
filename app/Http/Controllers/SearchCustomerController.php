@@ -101,4 +101,30 @@ class SearchCustomerController extends Controller
     {
         //
     }
+     public function transformCollection($customer) {
+        $customerToArray = $customer->toArray();
+        return [    
+            'current_page' => $customerToArray['current_page'],
+            'first_page_url' => $customerToArray['first_page_url'],
+            'last_page_url' => $customerToArray['last_page_url'],
+            'next_page_url' => $customerToArray['next_page_url'],
+            'prev_page_url' => $customerToArray['prev_page_url'],
+            'per_page' => $customerToArray['per_page'],
+            'from' => $customerToArray['from'],
+            'to' => $customerToArray['to'],
+            'total' => $customerToArray['total'],
+            'status' => 0,
+            'messages' => 'Return success!',
+            'data' => array_map([$this,'transformData'],$customerToArray['data'])
+
+        ];
+    }
+     public function transform($customer) {
+        return [
+            'customer_fname' => $customer['customer_fname'],
+            'customer_lname' => $customer['customer_lname'],
+            'customer_telephone' => $customer['customer_telephone']
+        ];
+    }
+
 }
