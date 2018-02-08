@@ -157,17 +157,22 @@ class productsController extends Controller
         $product->product_active = 1;
         $product->save();
 
-        $product_barcodes = $products["product_barcodes"];
-        $listBarcode = explode(',',$product_barcodes);
-        if (!empty($listBarcode)){
-            for ($i = 0;$i < count($listBarcode);$i++) {
-                $barcode = new Barcodes;
-                $barcode->barcode_product_id = $product_id;
-                $barcode->barcode_name = $listBarcode[$i];
-                $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C39+");
-                $barcode->save();
-            }
-        }
+        $barcode = new Barcodes;
+        $barcode->barcode_product_id = $product_id;
+        //$barcode->barcode_name = "QT"..$product_id;
+        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C39+");
+        $barcode->save(); 
+        // $product_barcodes = $products["product_barcodes"];
+        // $listBarcode = explode(',',$product_barcodes);
+        // if (!empty($listBarcode)){
+        //     for ($i = 0;$i < count($listBarcode);$i++) {
+        //         $barcode = new Barcodes;
+        //         $barcode->barcode_product_id = $product_id;
+        //         $barcode->barcode_name = $listBarcode[$i];
+        //         $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C39+");
+        //         $barcode->save();
+        //     }
+        // }
 
         $product_tags = $products["product_tags"];
         $listTag = explode(',', $product_tags);
@@ -190,6 +195,8 @@ class productsController extends Controller
 
             $qltag = new QLTags;
             $qltag->ql_tags_product_id = $product_id;
+            echo "yes";
+            die();
             if ($t) $qltag->ql_tags_tag_id = $tag_id;
             else $qltag->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
             $qltag->save();
@@ -225,23 +232,28 @@ class productsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         //
+        $products = $request->input("product");
         if (empty($products)) {
             return response()->json([
                 'error' => [
                     'status' => 2,
-                    'mesaage' => 'No ID found'
+                    'message' => 'No ID found'
                 ]
             ]);
         }
-        for ($i = 0;$i < count($products);$i++) {
-            $product = Products::find($product[$i]);
+        foreach ($products as $p) {
+            $product = Products::find($p);
             if ($product->product_active === 1) $product->product_active = 0;
             else if ($product->product_active === 0) $product->product_active = 1;
             $product->save();
         }
+        return response()->json([
+            'status' => 0,
+            'message' => 'success'
+        ]);
     }
 
     /**
@@ -253,7 +265,7 @@ class productsController extends Controller
     public function destroy(Request $request)
     {
         //
-        $product = $request->all();
+        $product = $request->input('product');
         if (empty($product)) {
             return response()->json([
                 'error' => [
@@ -262,10 +274,15 @@ class productsController extends Controller
                 ]
             ],422);
         }
-        for ($i = 0;$i < count($product);$i++) {
-            $product = Products::find($product[$i]);
+
+        foreach ($product as $p) {
+            $product = Products::find($p);
             $product->delete();
         }
+        return response()->json([
+            'status' => 0,
+            'message' => 'success'
+        ]);
     }
     public function productBarcode($product) {
         $arr = [];

@@ -30,7 +30,8 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 	Route::post('delete','productsController@destroy');
 	Route::post('active','productsController@update');
 
-	Route::post('searchBarcodes','productsSearchBarcodeController@index');
+	Route::post('query','productBarcodeSearch@query');
+	Route::post('search','productBarcodeSearch@search');
 
 });
 Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
@@ -48,7 +49,7 @@ Route::group(['prefix' => 'rest/v1/invoices'],function(){
 	Route::get('/','invoicesController@index');
 	Route::get('show/{id}','invoiceController@index');
 	Route::post('update/{id}','invoiceController@update');
-	Route::get('filter','invoiceFilter@index');
+	Route::post('filter','invoiceFilter@index');
 });
 
 Route::group(['prefix' => 'rest/v1'], function(){

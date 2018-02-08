@@ -22,7 +22,7 @@ class CreateTableBarcodes extends Migration
             $table->timestamps();
         });
         Schema::table('barcodes',function(Blueprint $table) {
-            $table->foreign('barcode_product_id')->references('product_id')->on('products');
+            $table->foreign('barcode_product_id')->references('product_id')->on('products')->onDelete('cascade');
         });
     }
 

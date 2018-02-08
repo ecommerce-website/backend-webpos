@@ -25,6 +25,12 @@ class invoiceController extends Controller
         )
         ->where('invoice_id',$id)
         ->first();
+        if (is_null($invoice)) return response()->json([
+            'error' => [
+                'status' => 1,
+                'message' => 'no Id found'
+            ]
+        ],422);
         return response()->json($this->transformCollection($invoice),200);
     }
     public function transformCollection($invoice) {
@@ -123,6 +129,10 @@ class invoiceController extends Controller
     {
         //
         $invoice = Invoices::where('invoice_id',$id)->first();
+        if (is_null($invoice)) return response()->json([
+            'error' => 1,
+            'message' => 'no Id found'
+        ]);
         if ($invoice->invoice_status === 'Posted') $invoice->invoice_status = 'Voided';
         $invoice->save();
         return [

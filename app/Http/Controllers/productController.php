@@ -134,28 +134,28 @@ class productController extends Controller
                 $t->save();
                 $qltag->ql_tags_tag_id = count($tag) + 1;
                 $qltag->save();
-            } else {
-                
             }
         }
 
         /*Lấy lại tag*/
         $tag2 = Tags::get()->whereIn('tag_name',$product_tags_toArray)->toArray();
-        var_dump($tag2);
-        die();
-        for ($i = 0;$i < count($tag2);$i++) {
+        $ql = QLTags::where('ql_tags_product_id',$id)->get()->toArray();
+        // var_dump($tag2);
+        // var_dump($ql);
+        // die();
+        foreach ($tag2 as $kq) {
             /*Nếu không phải tag mới, tìm toàn bộ ql tag mà product có id cần tìm*/
             $temp2 = true;
-            $ql = QLTags::where('ql_tags_product_id',$id)->get()->toArray();
             for ($j = 0;$j < count($ql);$j++) {
-                if ($ql[$j]['ql_tags_tag_id'] === $tag2[$i]['tag_id']) {
+                if ($ql[$j]['ql_tags_tag_id'] === $kq['tag_id']) {
                     $temp2 = false;
                     break;
                 }
             }
             /*Nếu tag id không tồn tại thì thêm vào bảng quản lý*/
             if ($temp2) {
-                $qltag->ql_tags_tag_id = $tagId;
+                $qltag->ql_tags_product_id = $id;
+                $qltag->ql_tags_tag_id = $kq['tag_id'];
                 $qltag->save();
             }
         }
