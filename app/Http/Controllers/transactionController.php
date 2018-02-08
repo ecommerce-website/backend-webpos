@@ -47,8 +47,8 @@ class transactionController extends Controller
     {
         //require
         $transaction = $request->input('transaction');
-        $transaction_type = $transaction->transaction_type;
-        $transaction_products = $transaction->transaction_product;
+        $transaction_type = $transaction['transaction_type'];
+        $transaction_product = $transaction['transaction_product'];
         $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
         if ($transaction_type === '' || empty($transaction_product)) {
             return response()->json([
@@ -59,10 +59,11 @@ class transactionController extends Controller
             ],422);
         }
         //optional
-        $transaction_supplier = $transaction->transaction_supplier;
-        $transaction_ref = $transaction->transaction_ref;
-        if ($transaction->transaction_remark === '') $transaction_remark = 'SUPREC-'.strval($transaction_id);
-        else $transaction_remark = $transaction->transaction_ref;
+        $transaction_supplier = $transaction['transaction_supplier'];
+        $transaction_ref = $transaction['transaction_ref'];
+        if ($transaction_ref === '') $transaction_ref = 'SUPREC-'.strval($transaction_id);
+        else $transaction_ref = $transaction->transaction_ref;
+        $transaction_remark = $transaction['transaction_remark'];
         
         $transactions = new Transactions();
         $transactions->transaction_id = $transaction_id;

@@ -131,6 +131,7 @@ class productsController extends Controller
         $products = $request->input('product');
 
         if ($products["product_stock_number"] === '' && $products["product_name"] === '' && $products["product_retail_price"] === '') {
+        
             return Response::json([
                 'error' => [
                     'status' => 1,
@@ -227,7 +228,6 @@ class productsController extends Controller
     public function update(Request $request, $id)
     {
         //
-        $products = $request->all();
         if (empty($products)) {
             return response()->json([
                 'error' => [

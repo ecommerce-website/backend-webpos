@@ -16,7 +16,7 @@ class productsFilter extends Controller
     {
         //
         $obj = $request->input('product');
-        if ($obj->product_name === '' && $obj->product_active === '' && $obj->productTag === '') {
+        if (is_null($obj['product_name']) && is_null($obj['product_active']) && empty($obj['product_tag'])) {
             $products = Products::with(array(
                 'barcodes',
                 'qltags' => function($query){
@@ -26,11 +26,13 @@ class productsFilter extends Controller
             return response()->json($this->transformCollection($products),200);
         }
         else {
-            $productName = $obj->product_name;
-            $productActive = $obj->product_active;
-            $productTag = $obj->productTag;
-            $products = Products::whereHas('qltags', function($query){
-                    $query->whereHas('tags', function($query) {
+            if (!is_null($obj['product_name'])) $productName = $obj['product_name'];
+            else $productName = "";
+            if (!is_null($obj['product_active'])) $productActive = strval($obj['product_active']);
+            else $productActive = "";
+            $productTag = $obj['product_tag'];
+            $products = Products::whereHas('qltags', function($query) use($productTag){
+                    $query->whereHas('tags', function($query) use($productTag) {
                         $query->whereIn('tag_name',$productTag);
                     });
                 }
@@ -44,13 +46,13 @@ class productsFilter extends Controller
             ->orderBy('product_id')
             ->where([
                 ['product_name','LIKE','%'.$productName.'%'],
-                ['product_active','=',$productActive]
+                ['product_active','LIKE','%'.$productActive.'%']
             ])
             ->paginate(10);
             return response()->json($this->transformCollection($products),200);
         }
     }
-    public function transformCollection($product) {
+    public function transformCollection($products) {
         $productsToArray = $products->toArray();
         return [    
             'current_page' => $productsToArray['current_page'],
@@ -67,7 +69,7 @@ class productsFilter extends Controller
             'data' => array_map([$this,'transformData'],$productsToArray['data'])
         ];
     }
-    public function transformData($product) {
+    public function transformData($products) {
         return [
             'product_id' => $products['product_id'],
             'product_type' => $products['product_type'],
