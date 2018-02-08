@@ -4,56 +4,69 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Products;
+use DB;
 
-class productsFilter extends Controller
+class productBarcodeSearch extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function query(Request $request)
     {
         //
-        $obj = $request->input('product');
-        if (is_null($obj['product_name']) && is_null($obj['product_active']) && empty($obj['product_tag'])) {
-            $products = Products::with(array(
-                'barcodes',
-                'qltags' => function($query){
-                    $query->with('tags');
-                }
-            ))->orderBy('product_id')->paginate(10);
-            return response()->json($this->transformCollection($products),200);
+        $search = $request->input('query');
+        if ($search === "") {
+            $product = Products::with(
+                array(
+                    'barcodes',
+                    'qltags'=>function($query) {
+                        $query->with('tags');
+                    }
+                )
+            )
+            ->paginate(10);
+            return response()->json($this->transformCollection($product),200);
         }
         else {
-            if (!is_null($obj['product_name'])) $productName = $obj['product_name'];
-            else $productName = "";
-            if (!is_null($obj['product_active'])) $productActive = strval($obj['product_active']);
-            else $productActive = "";
-            $productTag = $obj['product_tag'];
-            $products = Products::whereHas('qltags', function($query) use($productTag){
-                    $query->whereHas('tags', function($query) use($productTag) {
-                        $query->whereIn('tag_name',$productTag);
-                    });
-                }
-            )
-            ->with(array(
-                'barcodes',
-                'qltags' => function($query) {
-                    $query->with('tags');
-                }
-            ))
-            ->orderBy('product_id')
-            ->where([
-                ['product_name','LIKE','%'.$productName.'%'],
-                ['product_active','LIKE','%'.$productActive.'%']
-            ])
-            ->paginate(10);
-            return response()->json($this->transformCollection($products),200);
+            $products = DB::table('products')
+                        ->join('barcodes', 'products.product_id', '=', 'barcodes.barcode_product_id')
+                        ->where('product_name', 'LIKE', '%'.$search.'%')
+                        ->orWhere('barcode_name', 'LIKE', '%'.$search.'%')
+                        ->paginate(10);
+            return response()->json($this->transformCollection($products), 200);
+            // $product = Products::whereHas('barcodes',function($query) use ($pro){
+            //     $query->where('barcode_name','LIKE','%'.$pro.'%');
+            // })
+            // ->with(
+            //     array(
+            //         'barcodes',
+            //         'qltags' => function($query) {
+            //             $query->with('tags');
+            //         }
+            //     )
+            // )
+            // ->where('product_name','LIKE','%'.$pro.'%')
+            // ->paginate(10);
+            // return response()->json($this->transformCollection($product),200);
         }
+       
+    }
+    public function search(Request $request)
+    {
+        //
+        $barcode_name = $request->input('barcode_name');
+        $products = DB::table('products')
+                    ->join('barcodes', 'products.product_id', '=', 'barcodes.barcode_product_id')
+                    ->where('barcode_name', '=', $barcode_name)
+                    ->distinct()->first();
+        return response()->json($this->transformData($products), 200);
     }
     public function transformCollection($products) {
         $productsToArray = $products->toArray();
+        var_dump($productsToArray);
+        die();
         return [    
             'current_page' => $productsToArray['current_page'],
             'first_page_url' => $productsToArray['first_page_url'],
@@ -70,6 +83,7 @@ class productsFilter extends Controller
         ];
     }
     public function transformData($products) {
+        $products = json_decode(json_encode($products), true);
         return [
             'product_id' => $products['product_id'],
             'product_type' => $products['product_type'],
@@ -82,8 +96,8 @@ class productsFilter extends Controller
             'product_active' => $products['product_active'],
             'product_on_hand' => $products['product_on_hand'],
             'product_retail_price' => $products['product_retail_price'],
-            'product_barcodes' => $this->collectBarcode($products['barcodes']),
-            'product_ql_tags' => $this->collectQLTag($products['qltags'])
+            'product_barcodes' => $this->collectBarcode($products),
+            'product_ql_tags' => []
         ];
     }
     public function collectBarcode($products) {
@@ -94,11 +108,12 @@ class productsFilter extends Controller
             //Tạo một đối tượng $bar để lưu trữ một barcode
             //Một $products sẽ có nhiều $bar
             $bar = new class{};
-            $bar->barcode_id = $products[$i]['barcode_id'];
-            $bar->barcode_product_id = $products[$i]['barcode_product_id'];
-            $bar->barcode_name = $products[$i]['barcode_name'];
-            $bar->barcode_img = $products[$i]['barcode_img'];
+            $bar->barcode_id = $products['barcode_id'];
+            $bar->barcode_product_id = $products['barcode_product_id'];
+            $bar->barcode_name = $products['barcode_name'];
+            $bar->barcode_img = $products['barcode_img'];
             array_push($arr,$bar);
+            break;
         }
         return $arr;
     }

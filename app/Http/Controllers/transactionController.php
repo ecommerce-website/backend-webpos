@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Transactions;
+use App\QLTransactions;
 
 
 class transactionController extends Controller
@@ -22,7 +23,15 @@ class transactionController extends Controller
             }
         ))
         ->where('transaction_id',$id)
-        ->get();
+        ->first();
+        if (is_null($transactions)) {
+            return response()->json([
+                'error' => [
+                    'status'=> 2,
+                    'message' => 'no Id found'
+                ]
+            ]);
+        }
         return response()->json($this->transformCollection($transactions),200);
         
     }
@@ -47,10 +56,8 @@ class transactionController extends Controller
     {
         //require
         $transaction = $request->input('transaction');
-        $transaction_type = $transaction->transaction_type;
-        $transaction_products = $transaction->transaction_product;
-        $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
-        if ($transaction_type === '' || empty($transaction_product)) {
+
+        if (is_null($transaction['transaction_type']) || empty($transaction['transaction_product'])) {
             return response()->json([
                 'error'=>[
                     'status'=>1,
@@ -58,24 +65,32 @@ class transactionController extends Controller
                 ]
             ],422);
         }
+
         //optional
-        $transaction_supplier = $transaction->transaction_supplier;
-        $transaction_ref = $transaction->transaction_ref;
-        if ($transaction->transaction_remark === '') $transaction_remark = 'SUPREC-'.strval($transaction_id);
-        else $transaction_remark = $transaction->transaction_ref;
+        $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
+        $transaction_type = $transaction['transaction_type'];
+        $arrProduct = $transaction['transaction_product'];
+        $transaction_supplier = $transaction['transaction_supplier'];
+        $transaction_ref = $transaction['transaction_ref'];
+        if ($transaction_ref === '') $transaction_ref = 'SUPREC-'.strval($transaction_id);
+        else $transaction_ref = $transaction['transaction_ref'];
+        $transaction_remark = $transaction['transaction_remark'];
         
+
         $transactions = new Transactions();
         $transactions->transaction_id = $transaction_id;
         $transactions->transaction_type = $transaction_type;
         $transactions->transaction_ref = $transaction_ref;
-        $transactions->status = 'Posted';
+        $transactions->transaction_status = 'Posted';
+        $transactions->transaction_user = 'th3Wiz';
         $transactions->save();
 
-        $qlTransaction = new QLTransactions();
         for ($i = 0;$i < count($arrProduct);$i++) {
+            $qlTransaction = new QLTransactions();
             $qlTransaction->ql_transactions_transaction_id = $transaction_id;
-            $qlTransaction->ql_transactions_product_id = $arrProduct['product_id'];
-            $qlTransaction->ql_transactions_quantity_bought = $arrProduct['product_quantity_bought'];
+            $qlTransaction->ql_transactions_product_id = $arrProduct[$i]['product_id'];
+            $qlTransaction->ql_transactions_discount = $arrProduct[$i]['product_discount'];
+            $qlTransaction->ql_transactions_quantity_bought = $arrProduct[$i]['product_quantity_bought'];
             $qlTransaction->save();
         }
     }
@@ -115,12 +130,22 @@ class transactionController extends Controller
         //
         $transaction = Transactions::where('transaction_id',$id)
         ->first();
+
+        if (is_null($transaction)) {
+            return response()->json([
+                'error' => [
+                    'status' => 2,
+                    'message' => 'no Id found'
+                ]
+            ]);
+        }
+
         if ($transaction['transaction_status'] === 'Posted') $transaction['transaction_status'] = 'Voided';
         $transaction->save();
-        return [
+        return response()->json([
             'status' => 0,
             'message' => 'Successful!'
-        ];
+        ]);
     }
 
     /**
@@ -135,10 +160,12 @@ class transactionController extends Controller
     }
     public function transformCollection($transaction) {
         $transactionToArray = $transaction->toArray();
+        // var_dump($transactionToArray);
+        // exit();
         return [
             'status' => 0,
             'message' => 'Successful!',
-            'data' => array_map([$this,'transform'],$transactionToArray)
+            'data' => $this->transform($transactionToArray)
         ];
     }
     public function transform($transaction) {

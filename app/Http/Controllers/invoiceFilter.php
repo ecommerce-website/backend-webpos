@@ -15,52 +15,50 @@ class invoiceFilter extends Controller
     {
         //
         $invoice = $request->input('invoice');
-        $invoiceName = $invoice->invoice_name;
-        $invoiceStatus = $invoice->invoice_status;
-        $invoiceDateBegin = $invoice->invoice_date_begin;
-        $invoiceDateEnd = $invoice->invoice_date_end;
-        if ($invoiceName === null && $invoiceStatus === null && $dateBegin === null && $dateEnd === null) {
+        if (is_null($invoice['invoice_ref']) && is_null($invoice['invoice_status']) && $invoice['invoice_date_begin'] && is_null($invoice['invoice_date_end'])) {
+            echo "yes";
+            die();
             $invoices = Invoices::orderBy('invoice_id','desc')->paginate(10);
             return response()->json($this->transformCollection($invoices),200);
         }
         else {
-            if ($invoiceDateBegin == null) {
-                if ($invoiceDateEnd == null) {
-                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
-                                    ['invoice_ref','LIKE','%'.$invoieName.'%'],
-                                    ['invoice_status','LIKE','%'.$status.'%']
-                                ])
-                                ->paginate(10);
-                    return response()->json($this->transformCollection($invoices),200);
+            if (is_null($invoice['invoice_date_begin'])) {
+                if (is_null($invoice['invoice_date_end'])) {
+                    // // $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                    //                 ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%'],
+                    //                 ['invoice_status','LIKE','%'.$invoice['invoice_status'].'%']
+                    //             ])
+                    //             ->paginate(10);
+                    // return response()->json($this->transformCollection($invoices),200);
                 }
                 else {
                     $invoices = Invoices::orderBy('invoice_id','desc')->where([
-                                    ['invoice_ref','LIKE','%'.$invoiceName.'%'],
-                                    ['invoice_status','LIKE','%'.$invoiceStatus.'%']
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%'],
+                                    ['invoice_status','LIKE','%'.$invoice['invoice_status'].'%']
                                 ])
-                                ->whereDate('created_at','<=','%'.$invoiceDateEnd.'%d')
+                                ->whereDate('created_at','<=','%'.$invoice['invoice_date_end'].'%d')
                                 ->paginate(10);
                     return response()->json($this->transformCollection($invoices),200);
                 }
             }
             else {
-                if ($invoiceDateEnd == null) {
+                if (is_null($invoice['invoice_date'])) {
                     $invoices = Invoices::orderBy('invoice_id','desc')->where([
-                                    ['invoice_ref','LIKE','%'.$invoiceName.'%'],
-                                    ['invoice_status','LIKE','%'.$invoiceStatus.'%']
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%'],
+                                    ['invoice_status','LIKE','%'.$invoice['invoice_status'].'%']
                                 ])
-                                ->whereDate('created_at','>=','%'.$invoiceDateBegin.'%d')
+                                ->whereDate('created_at','>=','%'.$invoice['invoice_date_begin'].'%d')
                                 ->paginate(10);
                     return response()->json($this->transformCollection($invoices),200);
                 }
                 else {
                     $invoices = Invoices::orderBy('invoice_id','desc')->where([
-                                    ['invoice_ref','LIKE','%'.$invoiceName.'%'],
-                                    ['invoice_status','LIKE','%'.$invoiceStatus.'%']
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%'],
+                                    ['invoice_status','LIKE','%'.$invoice['invoice_status'].'%']
                                 ])
                                 ->whereDate([
-                                    ['created_at','<=','%'.$invoiceDateEnd.'%d'],
-                                    ['created_at','>=','%'.$invoiceDateBegin.'%d']
+                                    ['created_at','<=','%'.$invoice['invoice_date_end'].'%d'],
+                                    ['created_at','>=','%'.$invoice['invoice_date_begin'].'%d']
                                 ])
                                 ->paginate(10);
                     return response()->json($this->transformCollection($invoices),200);

@@ -28,10 +28,9 @@ class CreateTableInvoices extends Migration
             $table->dateTime('invoice_date');
             $table->timestamps();
         });
-        Schema::table('invoices',function (Blueprint $table) { 
-            // $table->foreign('invoice_user_id')->references('user_id')->on('users');
-            $table->foreign('invoice_customer_id')->references('customer_id')->on('customers');
 
+        Schema::table('invoices',function (Blueprint $table) {
+            $table->foreign('invoice_customer_id')->references('customer_id')->on('customers')->onDelete('cascade');
         });
     }
 

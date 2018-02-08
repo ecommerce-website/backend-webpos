@@ -19,12 +19,11 @@ class CreateTableTransactions extends Migration
             $table->string('transaction_type');
             $table->string('transaction_user');
             $table->string('transaction_ref');
-            $table->string('transaction_parent_ref'); 
+            $table->string('transaction_parent_ref')->nullable(); 
             $table->string('transaction_status');           
             $table->string('transaction_remark')->nullable();
             $table->string('transaction_supplier')->nullable();
             $table->string('transaction_related_party')->nullable();
-            $table->dateTime('transaction_date');
             $table->timestamps();
         });
     }

@@ -21,8 +21,8 @@ class CreateTableQLTags extends Migration
             $table->timestamps();
         });
         Schema::table('ql_tags', function(Blueprint $table) {
-            $table->foreign('ql_tags_product_id')->references('product_id')->on('products');
-            $table->foreign('ql_tags_tag_id')->references('tag_id')->on('tags');
+            $table->foreign('ql_tags_product_id')->references('product_id')->on('products')->onDelete('cascade');
+            $table->foreign('ql_tags_tag_id')->references('tag_id')->on('tags')->onDelete('cascade');
         });
     }
 
