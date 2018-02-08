@@ -15,8 +15,6 @@ class invoiceFilter extends Controller
     {
         //
         $invoice = $request->input('invoice');
-        var_dump($invoice);
-        die();
         if (is_null($invoice['invoice_ref']) && is_null($invoice['invoice_status']) && $invoice['invoice_date_begin'] && is_null($invoice['invoice_date_end'])) {
             echo "yes";
             die();

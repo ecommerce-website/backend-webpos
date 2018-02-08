@@ -124,14 +124,21 @@ class productsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    public function check($products) {
+        $query = Products::get();
+         for ($i = 0;$i < count($query);$i++) {
+            if ($query->product_stock_number === $products['product_stock_number']) return true;
+            return false;
+        }
+    }
     public function store(Request $request)
     {
         //
+
         $product = new Products;
         $products = $request->input('product');
 
         if ($products["product_stock_number"] === '' && $products["product_name"] === '' && $products["product_retail_price"] === '') {
-        
             return Response::json([
                 'error' => [
                     'status' => 1,
@@ -139,6 +146,16 @@ class productsController extends Controller
                 ]
             ],422);
         }
+
+        if ($this->check($products)) {
+            return Response::json([
+                'error' => [
+                    'status' => 3,
+                    'message' => 'stock number found'
+                ]
+            ],422);
+        }
+       
         $product->product_stock_number = $products["product_stock_number"];
         $product->product_name = $products["product_name"];
         $product->product_retail_price = $products["product_retail_price"];
@@ -159,20 +176,9 @@ class productsController extends Controller
 
         $barcode = new Barcodes;
         $barcode->barcode_product_id = $product_id;
-        //$barcode->barcode_name = "QT"..$product_id;
-        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C39+");
-        $barcode->save(); 
-        // $product_barcodes = $products["product_barcodes"];
-        // $listBarcode = explode(',',$product_barcodes);
-        // if (!empty($listBarcode)){
-        //     for ($i = 0;$i < count($listBarcode);$i++) {
-        //         $barcode = new Barcodes;
-        //         $barcode->barcode_product_id = $product_id;
-        //         $barcode->barcode_name = $listBarcode[$i];
-        //         $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C39+");
-        //         $barcode->save();
-        //     }
-        // }
+        $barcode->barcode_name = "QT".str_pad(strval($product_id),10,"0",STR_PAD_LEFT);
+        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93");
+        $barcode->save();
 
         $product_tags = $products["product_tags"];
         $listTag = explode(',', $product_tags);
@@ -195,8 +201,6 @@ class productsController extends Controller
 
             $qltag = new QLTags;
             $qltag->ql_tags_product_id = $product_id;
-            echo "yes";
-            die();
             if ($t) $qltag->ql_tags_tag_id = $tag_id;
             else $qltag->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
             $qltag->save();

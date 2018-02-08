@@ -65,6 +65,8 @@ class productBarcodeSearch extends Controller
     }
     public function transformCollection($products) {
         $productsToArray = $products->toArray();
+        var_dump($productsToArray);
+        die();
         return [    
             'current_page' => $productsToArray['current_page'],
             'first_page_url' => $productsToArray['first_page_url'],

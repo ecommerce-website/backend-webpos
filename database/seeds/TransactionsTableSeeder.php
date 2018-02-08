@@ -25,7 +25,6 @@ class TransactionsTableSeeder extends Seeder
         		'transaction_remark' => $faker->sentence($nbWords = 6,$variableNbWords = true),
         		'transaction_supplier' => $faker->company,
         		'transaction_related_party' => $faker->username,
-        		'transaction_date' => $faker->dateTime($max = 'now',$timezone = null),
         	]);
         }
     }
