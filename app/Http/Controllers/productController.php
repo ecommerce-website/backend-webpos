@@ -71,9 +71,11 @@ class productController extends Controller
      */
     public function edit(Request $request,$id)
     {
-        //
-        $obj = $request->
-        if (!$request->input('product_stock_number') || !$request->input('product_name') || !$request->input('product_retail_price')) {
+        //Lẩy toàn bộ request
+        $obj = $request->input('product');
+
+        //Nếu stock number, price và name trống thì trả về thông báo
+        if (is_null($obj['product_stock_number']) || is_null($obj['product_name']) || is_null($obj['product_retail_price'])) {
             return response()->json([
                 'error' => [
                     'status' => 1,
@@ -81,27 +83,39 @@ class productController extends Controller
                 ]
             ],422);
         }
+        $query = Products::where('product_stock_number',$obj['product_stock_number'])->first();
+        if (!is_null($query)) {
+            return response()->json([
+                'error' => [
+                    'status' => 4,
+                    'message' => 'sản phẩm đã tồn tại'
+                ]
+            ]);
+        }
+        /*lấy sản phẩm từ request*/
+        $product_stock_number = $obj['product_stock_number'];
+        $product_name = $obj['product_name'];
+        $product_retail_price = $obj['product_retail_price'];
+        $product_cost = $obj['product_cost'];
+        $product_description = $obj['product_description'];
+        $product_min_quantity = $obj['product_min_quantity'];
+        $product_max_quantity = $obj['product_max_quantity'];
+        $product_tags = $obj['product_tags'];
 
-        $product_stock_number = $request->input('product_stock_number');
-        $product_name = $request->input('product_name');
-        $product_retail_price = $request->input('product_retail_price');
-        $product_cost = $request->input('product_cost');
-        $product_description = $request->input('product_description');
-        $product_min_quantity = $request->input('product_min_quantity');
-        $product_max_quantity = $request->input('product_max_quantity');
-
-        $product_barcodes = $request->input('product_barcodes');
-        $product_barcodes_toArray = explode(",", $product_barcodes);
-
-        $product_tags = $request->input('product_tags');
+        /*Tách chuỗi tag thành mảng*/
         $product_tags_toArray = explode(",", $product_tags);
 
-        $product = Products::where('product_id',$id)
-        ->get();
-        $barcode = Barcodes::get()->toArray();
-        $tag = Tags::get()->toArray();
-        $qltag = new QLTags();
+        /*Thêm tag nếu có tag mới*/
+        foreach ($product_tags_toArray as $value) {
+            Tags::updateOrCreate(['tag_name' => $value]);
+            $q = Tags::where('tag_name',$value)->first();
+            QLTags::updateOrCreate(['ql_tags_product_id' => $id,'ql_tags_tag_id' => $q->tag_id]);
+        }
 
+        /*Tìm sản phẩm cần sửa*/
+        $product = Products::where('product_id',$id)->first();
+
+        /*Cập nhật các thuộc tính của sản phẩm*/
         $product->product_stock_number = $product_stock_number;
         $product->product_name = $product_name;
         $product->product_retail_price = $product_retail_price;
@@ -111,46 +125,8 @@ class productController extends Controller
         $product->product_max_quantity = $product_max_quantity;
         $product->save();
 
-        $qltag->ql_tags_product_id = $id;
+        /*Thêm dữ liệu vào bảng trung gian*/
 
-        for ($i = 0;$i < count($product_barcodes_toArray);$i++) {
-            $temp = true;
-            for ($j = 0;$j < count($barcode);$j++) {
-                if ($product_barcodes_toArray[$i] === $barcode[$j]) {
-                    $temp = false;
-                    break;
-                }
-            }
-            if ($temp) {
-                $bar = new Barcodes();
-                $bar->barcode_product_id = $id;
-                $bar->barcode_name = $product_barcodes_toArray[$i];
-                $bar->barcode_img = 'link_img';
-                $bar->save();
-            }
-        }
-
-        for ($i = 0;$i < count($product_tags_toArray);$i++) {
-            $temp = true;
-            for ($j = 0;$j < count($tag);$j++) {
-                if ($product_tags_toArray[$i] === $tag[$j]) {
-                    $temp = false;
-                    break;
-                }
-            }
-            if ($temp) {
-                $t = new Tags();
-                $t->tag_name = $product_tags_toArray[$i];
-                $qltag->ql_tags_tag_id = count($tag);
-                $qltag->save();
-                $t->save();
-            }
-            else {
-                $t = Tags::select('tag_id')->where('tag_name',$product_tags_toArray[$i])->get()->toArray();
-                $qltag->ql_tags_tag_id = $t['tag_id'];
-                $qltag->save();
-            }
-        }
         return [
             'status' => 0,
             'message' => 'Successfull'

@@ -24,8 +24,8 @@ class CreateTableQLInvoices extends Migration
             $table->timestamps();
         });
         Schema::table('ql_invoices', function(Blueprint $table) {
-            $table->foreign('ql_invoices_invoice_id')->references('invoice_id')->on('invoices');
-            $table->foreign('ql_invoices_product_id')->references('product_id')->on('products');
+            $table->foreign('ql_invoices_invoice_id')->references('invoice_id')->on('invoices')->onDelete('cascade');
+            $table->foreign('ql_invoices_product_id')->references('product_id')->on('products')->onDelete('cascade');
         });
     }
 

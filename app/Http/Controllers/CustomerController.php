@@ -16,7 +16,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $limit = $request->input('limit')?$request->input('limit'):5;
-        $customer = Customer::orderBy('customer_id','asc')
+        $customers = Customer::orderBy('customer_id','asc')
         ->select(
             'customer_id',
             'customer_fname',
@@ -33,7 +33,7 @@ class CustomerController extends Controller
 
         )
         ->paginate($limit);
-        return response()->json($this->transformCollection($customer),200);
+        return response()->json($this->transformCollection($customers),200);
        
     }
 
@@ -56,8 +56,11 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
        $customer = new Customer;
-       if(!$request->input('customer_fname')||
-          !$request->input('customer_lname')){
+       $customers = $request->input('customer');
+
+       if($customers->customer_fname === "" && 
+          $customers->customer_lname === "" &&
+          $customers->customer_telephone === ""){
         return Response::json([
             'error' => [
                 'status'=>1,
@@ -67,17 +70,17 @@ class CustomerController extends Controller
 
        }
        $customer_id = Customer::select('customer_id')->max('customer_id')+1;
-       $customer->customer_fname->input('customer_fname');
-       $customer->customer_lname->input('customer_lname');
-       $customer->customer_gender->input('customer_gender');
-       $customer->customer_email->input('customer_email');
-       $customer->customer_city->input('customer_city');
-       $customer->customer_mobile->input('customer_mobile');
-       $customer->customer_telephone->input('customer_telephone');
-       $customer->customer_street->input('customer_street');
-       $customer->customer_address->input('customer_address');
-       $customer->customer_note->input('customer_note');
-       $customer->customer_birthday->input('customer_birthday');
+       $customer->customer_fname = $customers->customer_fname;
+       $customer->customer_lname = $customers->customer_lname;
+       $customer->customer_gender = $customers->customer_gender;
+       $customer->customer_email =$customers->customer_email;
+       $customer->customer_city = $customers->customer_city;
+       $customer->customer_mobile = $customers->customer_mobile;
+       $customer->customer_telephone = $customers->customer_telephone;
+       $customer->customer_street = $customers->customer_street;
+       $customer->customer_address = $customers->customer_address;
+       $customer->customer_note = $customers->customer_note;
+       $customer->customer_birthday = $customers->customer_birthday;
        $customer->save();
     }
 
@@ -132,44 +135,44 @@ class CustomerController extends Controller
      */
     public function destroy($id)
     {
-        for ($i = 0;$i < count($listProduct);$i++) {
-            $product = Products::find($listProduct[$i]);
-            $product->delete();
+        for ($i = 0;$i < count($listCustomer);$i++) {
+            $customer = Customer::find($listCustomer[$i]);
+            $customer->delete();
         }
     }
-     public function transformCollection($customer) {
-        $customerToArray = $customer->toArray();
+     public function transformCollection($customers) {
+        $customersToArray = $customers->toArray();
         return [    
-            'current_page' => $customerToArray['current_page'],
-            'first_page_url' => $customerToArray['first_page_url'],
-            'last_page_url' => $customerToArray['last_page_url'],
-            'next_page_url' => $customerToArray['next_page_url'],
-            'prev_page_url' => $customerToArray['prev_page_url'],
-            'per_page' => $customerToArray['per_page'],
-            'from' => $customerToArray['from'],
-            'to' => $customerToArray['to'],
-            'total' => $customerToArray['total'],
+            'current_page' => $customersToArray['current_page'],
+            'first_page_url' => $customersToArray['first_page_url'],
+            'last_page_url' => $customersToArray['last_page_url'],
+            'next_page_url' => $customersToArray['next_page_url'],
+            'prev_page_url' => $customersToArray['prev_page_url'],
+            'per_page' => $customersToArray['per_page'],
+            'from' => $customersToArray['from'],
+            'to' => $customersToArray['to'],
+            'total' => $customersToArray['total'],
             'status' => 0,
             'messages' => 'Return success!',
-            'data' => array_map([$this,'transformData'],$customerToArray['data'])
+            'data' => array_map([$this,'transformData'],$customersToArray['data'])
 
         ];
     }
-    public function transformData($customer) {
-        $show = json_decode(json_encode($customer));
+    public function transformData($customers) {
+        $show = json_decode(json_encode($customers));
         return [
-            'customer_id' => $customer['customer_id'],
-            'customer_fname' => $customer['customer_fname'],
-            'customer_lname' => $customer['customer_lname'],
-            'customer_gender' => $customer['customer_gender'],
-            'customer_email' => $customer['customer_email'],
-            'customer_city' => $customer['customer_city'],
-            'customer_mobile' => $customer['customer_mobile'],
-            'customer_telephone' => $customer['customer_telephone'],
-            'customer_street' => $customer['customer_street'],
-           'customer_address' => $customer['customer_address'],
-           'customer_note' => $customer['customer_note'],
-           'customer_birthday' => $customer['customer_birthday']
+            'customer_id' => $customers['customer_id'],
+            'customer_fname' => $customers['customer_fname'],
+            'customer_lname' => $customers['customer_lname'],
+            'customer_gender' => $customers['customer_gender'],
+            'customer_email' => $customers['customer_email'],
+            'customer_city' => $customers['customer_city'],
+            'customer_mobile' => $customers['customer_mobile'],
+            'customer_telephone' => $customers['customer_telephone'],
+            'customer_street' => $customers['customer_street'],
+           'customer_address' => $customers['customer_address'],
+           'customer_note' => $customers['customer_note'],
+           'customer_birthday' => $customers['customer_birthday']
 
         ];
     }

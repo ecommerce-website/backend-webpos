@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Transactions;
+use App\QLTransactions;
+use App\Products;
 
 
 class transactionController extends Controller
@@ -22,7 +24,15 @@ class transactionController extends Controller
             }
         ))
         ->where('transaction_id',$id)
-        ->get();
+        ->first();
+        if (is_null($transactions)) {
+            return response()->json([
+                'error' => [
+                    'status'=> 2,
+                    'message' => 'no Id found'
+                ]
+            ]);
+        }
         return response()->json($this->transformCollection($transactions),200);
         
     }
@@ -45,28 +55,50 @@ class transactionController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
-        $transaction_type = $request->input('transaction_type');
-        $transaction_supplier = $request->input('transaction_supplier')?$request->input('transaction_type'):'';
-        $transaction_ref = $request->input('transaction_ref')?$request->input('transaction_ref'):'';
-        $transaction_remark = $request->input('transaction_remark')?$request->input('transaction_remark'):'SUPREC-'.strval($transaction_id);
-        //Lay ve mang product
-        //$arrProduct = $request-> ;
-        
-        $transaction = new Transactions();
-        $transaction->transaction_id = $transaction_id;
-        $transaction->transaction_type = $transaction_type;
-        $transaction->transaction_ref = $transaction_ref;
-        $transaction->status = 'Posted';
-        $transaction->save();
+        //require
+        $transaction = $request->input('transaction');
 
-        $qlTransaction = new QLTransactions();
-        $qltransaction->ql_transactions_transaction_id = $transaction_id;
+        if (is_null($transaction['transaction_type']) || empty($transaction['transaction_product'])) {
+            return response()->json([
+                'error'=>[
+                    'status'=>1,
+                    'message'=>'Cung cap du thong tin!'
+                ]
+            ],422);
+        }
+
+        //optional
+        $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
+        $transaction_type = $transaction['transaction_type'];
+        $arrProduct = $transaction['transaction_product'];
+        $transaction_supplier = $transaction['transaction_supplier'];
+        $transaction_ref = $transaction['transaction_ref'];
+        if ($transaction_ref === '') $transaction_ref = 'SUPREC-'.strval($transaction_id);
+        else $transaction_ref = $transaction['transaction_ref'];
+        $transaction_remark = $transaction['transaction_remark'];
+        
+
+        $transactions = new Transactions();
+        $transactions->transaction_id = $transaction_id;
+        $transactions->transaction_type = $transaction_type;
+        $transactions->transaction_ref = $transaction_ref;
+        $transactions->transaction_status = 'Posted';
+        $transactions->transaction_user = 'th3Wiz';
+        $transactions->save();
+
+
         for ($i = 0;$i < count($arrProduct);$i++) {
-            $qlTransaction->ql_transactions_product_id = $arrProduct['product_id'];
-            $qlTransaction->ql_transactions_quantity_bought = $arrProduct['product_quantity_bought'];
+            $qlTransaction = new QLTransactions();
+            $qlTransaction->ql_transactions_transaction_id = $transaction_id;
+            $qlTransaction->ql_transactions_product_id = $arrProduct[$i]['product_id'];
+            $qlTransaction->ql_transactions_discount = $arrProduct[$i]['product_discount'];
+            $qlTransaction->ql_transactions_quantity_bought = $arrProduct[$i]['product_quantity_bought'];
+            $query = Products::where('product_id',$arrProduct[$i]['product_id'])->first();
+            if (!is_null($query)){
+                $query->product_on_hand = $query->product_on_hand + $qlTransaction->ql_transactions_quantity_bought;
+                $query->save();
             $qlTransaction->save();
+            }
         }
     }
 
@@ -90,19 +122,7 @@ class transactionController extends Controller
     public function edit($id)
     {
         //
-        $transaction = Transactions::select(
-            'transaction_id',
-            'transaction_status'
-        )
-        ->where('transaction_id',$id)
-        ->first();
-
-        if ($transaction['transaction_status'] === 'Posted') $transaction['transaction_status'] = 'Voided';
-        $transaction->save();
-        return [
-            'status' => 0,
-            'message' => 'Successful!'
-        ];
+        
     }
 
     /**
@@ -115,6 +135,24 @@ class transactionController extends Controller
     public function update(Request $request, $id)
     {
         //
+        $transaction = Transactions::where('transaction_id',$id)
+        ->first();
+
+        if (is_null($transaction)) {
+            return response()->json([
+                'error' => [
+                    'status' => 2,
+                    'message' => 'no Id found'
+                ]
+            ]);
+        }
+
+        if ($transaction['transaction_status'] === 'Posted') $transaction['transaction_status'] = 'Voided';
+        $transaction->save();
+        return response()->json([
+            'status' => 0,
+            'message' => 'Successful!'
+        ]);
     }
 
     /**
@@ -129,10 +167,12 @@ class transactionController extends Controller
     }
     public function transformCollection($transaction) {
         $transactionToArray = $transaction->toArray();
+        // var_dump($transactionToArray);
+        // exit();
         return [
             'status' => 0,
             'message' => 'Successful!',
-            'data' => array_map([$this,'transform'],$transactionToArray)
+            'data' => $this->transform($transactionToArray)
         ];
     }
     public function transform($transaction) {
@@ -141,6 +181,7 @@ class transactionController extends Controller
             'transaction_ref' => $transaction['transaction_ref'],
             'transaction_date' => $transaction['transaction_date'],
             'transaction_user' => $transaction['transaction_user'],
+            'transaction_type' => $transaction['transaction_type'],
             'qltransactions' => $this->collectQLTransaction($transaction['qltransactions'])
         ];
     }

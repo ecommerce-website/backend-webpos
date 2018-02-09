@@ -3,43 +3,30 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Transactions;
 
-class transactionTypeController extends Controller
+class transactionProductSearch extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         //
-        $transactionParRef = Transactions::select(
-            'transaction_id',
-            'transaction_type',
-            'transaction_ref'
-        )
-        ->where('transaction_type','Receive from Supplier')
-        ->get();
-        return response()->json($this->transformCollection($transactionParRef),200);
+        $transactionProduct = $request->input('transaction_product');
+        $transaction_product_name = $transactionProduct->transaction_product_name;
+        $transaction_product_barcode = $transactionProduct->transaction_product_barcode;
+        $transaction_product_stock_number = $transactionProduct->transaction_product_stock_number;
+        $product = Products::where([
+            ['product_name','LIKE','%'.$transaction_product_name.'%'],
+            ['product_barcode','LIKE','%'.$transaction_product_barcode.'%'],
+            ['product_stock_number','LIKE','%'.$transaction_product_stock_number.'%']
+        ])->get();
+        return respones()->json($this->transformCollection($product),200);
     }
+    public function transformCollection($product) {
 
-    public function transformCollection($transactionParRef) {
-        $transToArray = $transactionParRef->toArray();
-        return [
-            'status' => 0,
-            'message' => 'Successfull!',
-            'data' => array_map([$this,'transform'],$transToArray)
-        ];
-    }
-
-    public function transform($transactionParRef) {
-        return [
-            'transaction_id' => $transactionParRef['transaction_id'],
-            'transaction_type' => $transactionParRef['transaction_type'],
-            'transaction_ref' => $transactionParRef['transaction_ref']
-        ];
     }
 
     /**

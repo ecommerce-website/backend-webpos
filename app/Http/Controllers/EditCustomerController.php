@@ -65,7 +65,30 @@ class EditCustomerController extends Controller
      */
     public function edit($id)
     {
-        //
+        $obj = $request->input('customer');
+        $customer_fname = $obj->customer_fname;
+        $customer_lname = $obj->customer_lname;
+        $customer_telephone = $obj->customer_telephone;
+        if ($customer_fname === '' && $customer_lname === '' && $customer_telephone === '') {
+            return response()->json([
+                'error' => [
+                    'status' => 1,
+                    'message' => 'Hãy cung cấp đủ thông tin'
+                ]
+            ],422);
+        }
+         $customer->customer_fname = $obj->customer_fname;
+       $customer->customer_lname = $obj->customer_lname;
+       $customer->customer_gender = $obj->customer_gender;
+       $customer->customer_email =$obj->customer_email;
+       $customer->customer_city = $obj->customer_city;
+       $customer->customer_mobile = $obj->customer_mobile;
+       $customer->customer_telephone = $obj->customer_telephone;
+       $customer->customer_street = $obj->customer_street;
+       $customer->customer_address = $obj->customer_address;
+       $customer->customer_note = $obj->customer_note;
+       $customer->customer_birthday = $obj->customer_birthday;
+       $customer->save();
     }
 
     /**
@@ -91,22 +114,7 @@ class EditCustomerController extends Controller
         //
     }
     public function transformCollection($customer) {
-        // $customerToArray = $customer->toArray();
-        // return [    
-        //     'current_page' => $customerToArray['current_page'],
-        //     'first_page_url' => $customerToArray['first_page_url'],
-        //     'last_page_url' => $customerToArray['last_page_url'],
-        //     'next_page_url' => $customerToArray['next_page_url'],
-        //     'prev_page_url' => $customerToArray['prev_page_url'],
-        //     'per_page' => $customerToArray['per_page'],
-        //     'from' => $customerToArray['from'],
-        //     'to' => $customerToArray['to'],
-        //     'total' => $customerToArray['total'],
-        //     'status' => 0,
-        //     'messages' => 'Return success!',
-        //     'data' => array_map([$this,'transformData'],$customerToArray['data'])
-
-        // ];
+        
          $customerToArray = $customer->toArray();
         return [  
             'status' => 0,
@@ -115,7 +123,7 @@ class EditCustomerController extends Controller
         ];
     }
     public function transformData($customer) {
-        $show = json_decode(json_encode($customer));
+       // $show = json_decode(json_encode($customer));
         return [
             'customer_id' => $customer['customer_id'],
             'customer_fname' => $customer['customer_fname'],

@@ -23,8 +23,8 @@ class CreateTableQLTransactions extends Migration
             $table->timestamps();
         });
         Schema::table('ql_transactions', function(Blueprint $table) {
-            $table->foreign('ql_transactions_transaction_id')->references('transaction_id')->on('transactions');
-            $table->foreign('ql_transactions_product_id')->references('product_id')->on('products');
+            $table->foreign('ql_transactions_transaction_id')->references('transaction_id')->on('transactions')->onDelete('cascade');
+            $table->foreign('ql_transactions_product_id')->references('product_id')->on('products')->onDelete('cascade');
         });
     }
 

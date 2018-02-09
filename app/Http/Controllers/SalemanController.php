@@ -3,17 +3,23 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\User;
+use Carbon\Carbon;
 
-class productsUnitController extends Controller
+class SalemanController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index($id)
     {
-        //
+         $saleman = User::where('user_id',$id)
+        ->get();
+
+        
+        return response()->json($this->transformCollection($saleman),200);
     }
 
     /**
@@ -32,27 +38,9 @@ class productsUnitController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request,$id)
+    public function store(Request $request)
     {
         //
-        $productUnit = $request->input('product_unit');
-        $productArray = explode('-', $product);
-        $getProduct = Products::where('product_id',$id)->get()->toArray();
-        $product = new Products();
-
-        $product->product_type = 'Unit Product';
-        $product->product_unit_string = $productUnitArray[0];
-        $product->product_unit_quantity = (int)$productUnitArray[1];
-        $product->product_stock_number = $getProduct['product_stock_number'].'-'.$product->product_unit_string;
-        $product->product_retail_price = $getProduct['product_retail_price'] * $product->product_unit_quantity;
-        $product->product_on_hand = 0;
-        $product->product_description = $getProduct['product_description'];
-        $product->product_name = $getProduct['product_name'];
-        $product->prouct_cost = $getProduct['product_cost'] * $product->product_unit_quantity;
-        $product->product_min_quantity = $getProduct['product_min_quantity'];
-        $product->product_max_quantity = $getProduct['product_max_quantity'];
-
-        $product->save();
     }
 
     /**
@@ -98,5 +86,26 @@ class productsUnitController extends Controller
     public function destroy($id)
     {
         //
+    }
+      public function transformCollection($saleman) {
+        
+         $salemanToArray = $saleman->toArray();
+        return [  
+            'status' => 0,
+            'messages' => 'Return success!',
+            'data' => array_map([$this,'transformData'],$salemanToArray)
+        ];
+    }
+    public function transformData($saleman) {
+        $show = json_decode(json_encode($saleman));
+        return [
+            'user_id' => $saleman['user_id'],
+            'user_name' => $saleman['user_name'],
+            'user_email' => $saleman['user_email'],
+            'user_pass' => $saleman['user_pass'],
+            'user_company_name' => $saleman['user_company_name'],
+            'user_owner_name' => $saleman['user_owner_name'],
+            'user_country' => $saleman['user_country'],
+        ];
     }
 }

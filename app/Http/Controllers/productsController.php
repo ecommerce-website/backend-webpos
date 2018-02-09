@@ -8,6 +8,7 @@ use App\Barcodes;
 use App\Tags;
 use App\QLTags;
 use DB;
+use \Milon\Barcode\DNS1D;
 
 class productsController extends Controller
 {
@@ -123,70 +124,66 @@ class productsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
+    
     public function store(Request $request)
     {
         //
+
         $product = new Products;
-        if (!$request->input('product_stock_number') || !$request->input('product_name') || !$request->input('product_retail_price')) {
-            return Response::json([
+        $products = $request->input('product');
+        if (is_null($products["product_stock_number"]) || is_null($products['product_name']) || is_null($products['product_retail_price'])) {
+            return response()->json([
                 'error' => [
                     'status' => 1,
                     'message' => 'Hãy cung cấp đủ thông tin'
                 ]
             ],422);
         }
-        
+
+        $query = Products::select('product_stock_number')->where('product_stock_number',$products['product_stock_number'])->first();
+        if (!is_null($query)) {
+            return response()->json([
+                'error' => [
+                    'status' => 4,
+                    'message' => 'sản phẩm đã tồn tại'
+                ]
+            ]);
+        }
+       
+        $product->product_stock_number = $products["product_stock_number"];
+        $product->product_name = $products["product_name"];
+        $product->product_retail_price = $products["product_retail_price"];
         $product_id = Products::select('product_id')->max('product_id') + 1;
         $product->product_type = 'Regular product';
-        $product->product_stock_number = $request->input('product_stock_number');
-        $product->product_name = $request->input('product_name');
         $product->product_unit_string = 'PC';
         $product->product_unit_quantity = 1;
-        $product->product_cost = $request->input('product_cost')?$request->input('cost'):0;
-        $product->product_retail_price = $request->input('product_retail_price')?$request->input('product_retail_price'):0;
-        $product->product_description = $request->input('product_description')?$request->input('product_description'):'';
-        $product->product_min_quantity = $request->input('product_min_quantity')?$request->input('product_min_quantity'):0;
-        $product_max_quantity = $request->input('product_max_quantity')?$request->input('product_max_quantity'):0;
+        if (!is_null($products["product_cost"])) $product->product_cost = intval($products["product_cost"]);
+        else $product->product_cost = 0;
+
+        if (!is_null($products["product_min_quantity"])) $product->product_min_quantity = intval($products["product_min_quantity"]);
+        else $product->product_min_quantity = 0;
+        if (!is_null($products["product_max_quantity"])) $product->product_max_quantity = intval($products["product_max_quantity"]);
+        else $product->product_max_quantity = 0;
+        $product->product_description = $products["product_description"];
         $product->product_active = 1;
         $product->save();
 
-        if ($bc = $request->input('product_barcode')){
-            $listBc = explode(',', $bc);
-            for ($i = 0;$i < count($listBc);$i++) {
-                $barcode = new Barcodes;
-                $barcode->barcode_product_id = $product_id;
-                $barcode->barcode_name = $listBc[$i];
-                $barcode->save();
-            }
-        }
+        $barcode = new Barcodes;
+        $barcode->barcode_product_id = $product_id;
+        $barcode->barcode_name = "QT".str_pad(strval($product_id),10,"0",STR_PAD_LEFT);
+        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93");
+        $barcode->save();
 
-        $tag = $request->input('product_tag');
-        $listTag = explode(',', $tag);
-        $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
-        for ($i = 0;$i < count($listTag);$i++) {
-            $t = false;
-            $tag_id = 0;
-            for ($j = 0;$j < count($listTagExisted);$j++) {
-                if ($listTag[$i] === $listTagExisted[$j]['tag_name']) {
-                    $tag_id = $listTagExisted[$j]['tag_id'];
-                    $t = true;
-                    break;
-                }
-            }
-            if (!$t) {
-                $tags = new Tags;
-                $tags->tag_name = $listTag[$i];
-                $tags->save();
-            }
-
-            $qltag = new QLTags;
-            $qltag->ql_tags_product_id = $product_id;
-            if ($t) $qltag->ql_tags_tag_id = $tag_id;
-            else $qltags->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
-            $qltags->save();
+        $product_tags = $products["product_tags"];
+        $listTag = explode(',', $product_tags);
+        foreach ($listTag as $value) {
+            Tags::updateOrCreate(['tag_name' => $value]);
+            $q = Tags::where('tag_name',$value)->first();
+            QLTags::updateOrCreate(['ql_tags_product_id' => $product_id,'ql_tags_tag_id' => $q->tag_id]);
         }
+        
+        
     }
-
     /**
      * Display the specified resource.
      *
@@ -216,16 +213,28 @@ class productsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         //
-        //$listProduct = $request->
-        // for ($i = 0;$i < count($listProduct);$i++) {
-        //     $product = Products::find($listProduct);
-        //     if ($product->product_active === 1) $product->product_active = 0;
-        //     else if ($product->product_active === 0) $product->product_active = 1;
-        //     $product->save();
-        // }
+        $products = $request->input("product");
+        if (empty($products)) {
+            return response()->json([
+                'error' => [
+                    'status' => 2,
+                    'message' => 'No ID found'
+                ]
+            ]);
+        }
+        foreach ($products as $p) {
+            $product = Products::find($p);
+            if ($product->product_active === 1) $product->product_active = 0;
+            else if ($product->product_active === 0) $product->product_active = 1;
+            $product->save();
+        }
+        return response()->json([
+            'status' => 0,
+            'message' => 'success'
+        ]);
     }
 
     /**
@@ -237,11 +246,24 @@ class productsController extends Controller
     public function destroy(Request $request)
     {
         //
-        //$listProduct = $request->...
-        // for ($i = 0;$i < count($listProduct);$i++) {
-        //     $product = Products::find($listProduct[$i]);
-        //     $product->delete();
-        // }
+        $product = $request->input('product');
+        if (empty($product)) {
+            return response()->json([
+                'error' => [
+                    'status' => 2,
+                    'message' => 'No ID found'
+                ]
+            ],422);
+        }
+
+        foreach ($product as $p) {
+            $product = Products::find($p);
+            $product->delete();
+        }
+        return response()->json([
+            'status' => 0,
+            'message' => 'success'
+        ]);
     }
     public function productBarcode($product) {
         $arr = [];

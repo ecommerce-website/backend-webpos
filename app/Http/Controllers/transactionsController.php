@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Transactions;
+use App\Products;
+use DB;
 
 class transactionsController extends Controller
 {
@@ -15,16 +17,67 @@ class transactionsController extends Controller
     public function index()
     {
         //
-        $transactions = Transactions::select(
-            'transaction_id',
-            'transaction_ref',
-            'transaction_date',
-            'transaction_type',
-            'transaction_status',
-            'transaction_user'
-        )
+        $transactions = Transactions::orderBy('transaction_id','desc')
         ->paginate(10);
         return response()->json($this->transformCollection($transactions),200);
+    }
+    public function search(Request $request) {
+        $query = $request->input('query');
+        if (is_null($query['transaction_name']) && is_null($query['transaction_date_begin']) && is_null($query['transaction_date_end'])) {
+            $transactions = Transactions::orderBy('transaction_id','desc')->paginate(10);
+            return response()->json($this->transformCollection($transactions),200);
+        }
+        else {
+            if (is_null($query['transaction_date_begin'])) {
+                if (is_null($query['transaction_date_end'])) {
+                    $transactions = Transactions::orderBy('transaction_id','desc')
+                    ->where('transaction_ref','LIKE','%'.$query['transaction_name'].'%')
+                    ->paginate(10);
+                    return response()->json($this->transformCollection($transactions),200);
+                }
+                else {
+                    $transactions = Transactions::orderBy('transaction_id','desc')
+                    ->where([
+                        ['transaction_ref','LIKE','%'.$query['trasaction_name'].'%'],
+                        ['transaction_created_at','<=',$query['transaction_date_end']]
+                    ])
+                    ->paginate(10);
+                    return response()->json($this->transformCollection($transactions),200);
+                }
+            }
+            else {
+                if (is_null($query['transaction_date_end'])) {
+                    $transactions = Transactions::orderBy('transaction_id','desc')
+                    ->where([
+                        ['transaction_ref','LIKE','%'.$query['trasaction_name'].'%'],
+                        ['transaction_created_at','>=',$query['transaction_date_begin']]
+                    ])
+                    ->paginate(10);
+                    return response()->json($this->transformCollection($transactions),200);
+                }
+                else {
+                    $transactions = Transactions::orderBy('transaction_id','desc')
+                    ->where([
+                        ['transaction_ref','LIKE','%'.$query['trasaction_name'].'%'],
+                        ['transaction_created_at','>=',$query['transaction_date_begin']],
+                        ['transaction_created_at','<=',$query['transaction_date_end']]
+                    ])
+                    ->paginate(10);
+                    return response()->json($this->transformCollection($transactions),200);
+                }
+            }
+        }
+    }
+    public function searchProduct(Request $request) {
+        $query = $request->input('query');
+        $product = Products::
+        where([
+            ['product_name','LIKE','%'.$query['product_name'].'%'],
+            ['product_unit_string','LIKE','%'.$query['product_unit_string'].'%'],
+            ['product_stock_number','LIKE','%'.$query['product_stock_number'].'%']
+        ])
+        ->paginate(10);
+        return response()->json($this->transformCollection($product),200);
     }
 
     /**
@@ -104,16 +157,26 @@ class transactionsController extends Controller
             'total' => $transactionsToArray['total'],
             'status' => 0,
             'message' => 'Successful!',
-            'data' => array_map([$this,'transform'],$transactionsToArray['data'])
+            'data' => array_map([$this,'transformProduct'],$transactionsToArray['data'])
+        ];
+    }
+    public function transformProduct($transactions) {
+        $transactions = json_decode(json_encode($transactions),true);
+        return [
+            'product_id' => $transactions['product_id'],
+            'product_name' => $transactions['product_name'],
+            'product_unit_string' => $transactions['product_unit_string'],
+            'product_stock_number' => $transactions['product_stock_number']
         ];
     }
     public function transform($transactions) {
+        $transactions = json_decode(json_encode($transactions),true);
         return [
             'transaction_id' => $transactions['transaction_id'],
             'transaction_ref' => $transactions['transaction_ref'],
-            'transaction_date' => $transactions['transaction_date'],
             'transaction_type' => $transactions['transaction_type'],
-            'transaction_date' => $transactions['transaction_date'],
+            'transaction_date' => $transactions['created_at'],
+            'transaction_status' => $transactions['transaction_status'],
             'transaction_user' => $transactions['transaction_user']
         ];
     }
