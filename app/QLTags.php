@@ -9,6 +9,7 @@ class QLTags extends Model
     //
     protected $table = 'ql_tags';
     protected $primaryKey = 'ql_tags_id';
+    protected $fillable = ['ql_tags_tag_id','ql_tags_product_id']
     public function tags() {
     	return $this->belongsTo('App\Tags','ql_tags_tag_id','tag_id');
     }

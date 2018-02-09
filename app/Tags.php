@@ -8,7 +8,8 @@ class Tags extends Model
 {
     //
     protected $table = 'tags';
-    public function products() {
-    	return $this->belongsToMany('App\Products');
+    protected $fillable = ['tag_name'];
+    public function qltags() {
+    	return $this->belongsToMany('App\QLTags','ql_tags_tag_id','tag_id');
     }
 }

@@ -124,13 +124,7 @@ class productsController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function check($products) {
-        $query = Products::get();
-         for ($i = 0;$i < count($query);$i++) {
-            if ($query->product_stock_number === $products['product_stock_number']) return true;
-            return false;
-        }
-    }
+    
     public function store(Request $request)
     {
         //
@@ -138,8 +132,8 @@ class productsController extends Controller
         $product = new Products;
         $products = $request->input('product');
 
-        if ($products["product_stock_number"] === '' && $products["product_name"] === '' && $products["product_retail_price"] === '') {
-            return Response::json([
+        if (is_null($products["product_stock_number"]) || is_null($products['product_name']) || is_null($products['product_retail_price'])) {
+            return response()->json([
                 'error' => [
                     'status' => 1,
                     'message' => 'Hãy cung cấp đủ thông tin'
@@ -147,13 +141,14 @@ class productsController extends Controller
             ],422);
         }
 
-        if ($this->check($products)) {
-            return Response::json([
+        $query = Products::select('product_stock_number')->where('product_stock_number',$products['product_stock_number'])->first();
+        if (!is_null($query)) {
+            return response()->json([
                 'error' => [
-                    'status' => 3,
-                    'message' => 'stock number found'
+                    'status' => 4,
+                    'message' => 'sản phẩm đã tồn tại'
                 ]
-            ],422);
+            ]);
         }
        
         $product->product_stock_number = $products["product_stock_number"];
@@ -163,12 +158,12 @@ class productsController extends Controller
         $product->product_type = 'Regular product';
         $product->product_unit_string = 'PC';
         $product->product_unit_quantity = 1;
-        if ($products["product_cost"] === '') $product->product_cost = intval($products["product_cost"]);
+        if (!is_null($products["product_cost"])) $product->product_cost = intval($products["product_cost"]);
         else $product->product_cost = 0;
 
-        if ($products["product_min_quantity"] === '') $product->product_min_quantity = intval($products["product_min_quantity"]);
+        if (!is_null($products["product_min_quantity"])) $product->product_min_quantity = intval($products["product_min_quantity"]);
         else $product->product_min_quantity = 0;
-        if ($products["product_max_quantity"] === '') $product->product_max_quantity = intval($products["product_max_quantity"]);
+        if (!is_null($products["product_max_quantity"])) $product->product_max_quantity = intval($products["product_max_quantity"]);
         else $product->product_max_quantity = 0;
         $product->product_description = $products["product_description"];
         $product->product_active = 1;
@@ -182,31 +177,35 @@ class productsController extends Controller
 
         $product_tags = $products["product_tags"];
         $listTag = explode(',', $product_tags);
-        $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
-        for ($i = 0;$i < count($listTag);$i++) {
-            $t = false;
-            $tag_id = 0;
-            for ($j = 0;$j < count($listTagExisted);$j++) {
-                if ($listTag[$i] === $listTagExisted[$j]['tag_name']) {
-                    $tag_id = $listTagExisted[$j]['tag_id'];
-                    $t = true;
-                    break;
-                }
-            }
-            if (!$t) {
-                $tags = new Tags;
-                $tags->tag_name = $listTag[$i];
-                $tags->save();
-            }
-
-            $qltag = new QLTags;
-            $qltag->ql_tags_product_id = $product_id;
-            if ($t) $qltag->ql_tags_tag_id = $tag_id;
-            else $qltag->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
-            $qltag->save();
+        foreach ($listTag as $value) {
+            # code...
+            Tags::updateOrCreate(['tag_name' => $value]);
         }
-    }
+        // $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
+    //     for ($i = 0;$i < count($listTag);$i++) {
+    //         $t = false;
+    //         $tag_id = 0;
+    //         for ($j = 0;$j < count($listTagExisted);$j++) {
+    //             if ($listTag[$i] === $listTagExisted[$j]['tag_name']) {
+    //                 $tag_id = $listTagExisted[$j]['tag_id'];
+    //                 $t = true;
+    //                 break;
+    //             }
+    //         }
+    //         if (!$t) {
+    //             $tags = new Tags;
+    //             $tags->tag_name = $listTag[$i];
+    //             echo $tags->tag_name;
+    //             //$tags->save();
+    //         }
 
+    //         $qltag = new QLTags;
+    //         $qltag->ql_tags_product_id = $product_id;
+    //         if ($t) $qltag->ql_tags_tag_id = $tag_id;
+    //         else $qltag->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
+    //         //$qltag->save();
+    //     }
+    }
     /**
      * Display the specified resource.
      *
