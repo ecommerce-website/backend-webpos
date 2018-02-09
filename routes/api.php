@@ -20,12 +20,11 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 	Route::get('/','productsController@index'); //OK
 	Route::post('filter','productsFilter@index'); //OK
 	Route::get('show/{id}','productController@index'); //OK
-	Route::post('edit/{id}','productController@edit');
+	Route::post('edit/{id}','productController@edit');//OK
 	Route::post('update/{id}','productController@update');//OK
 	
 	Route::get('sales/{id}','productsSaleController@index'); //OK
 	Route::get('transactions/{id}','productsTransController@index'); //OK
-	Route::post('storeUnit/{id}','productsUnitController@store');
 	Route::post('store','productsController@store'); //OK
 	Route::post('delete','productsController@destroy');//OK
 	Route::post('active','productsController@update');//OK

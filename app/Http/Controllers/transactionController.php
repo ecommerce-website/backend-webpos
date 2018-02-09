@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Transactions;
 use App\QLTransactions;
+use App\Products;
 
 
 class transactionController extends Controller
@@ -85,13 +86,19 @@ class transactionController extends Controller
         $transactions->transaction_user = 'th3Wiz';
         $transactions->save();
 
+
         for ($i = 0;$i < count($arrProduct);$i++) {
             $qlTransaction = new QLTransactions();
             $qlTransaction->ql_transactions_transaction_id = $transaction_id;
             $qlTransaction->ql_transactions_product_id = $arrProduct[$i]['product_id'];
             $qlTransaction->ql_transactions_discount = $arrProduct[$i]['product_discount'];
             $qlTransaction->ql_transactions_quantity_bought = $arrProduct[$i]['product_quantity_bought'];
+            $query = Products::where('product_id',$arrProduct[$i]['product_id'])->first();
+            if (!is_null($query)){
+                $query->product_on_hand = $query->product_on_hand + $qlTransaction->ql_transactions_quantity_bought;
+                $query->save();
             $qlTransaction->save();
+            }
         }
     }
 

@@ -178,33 +178,12 @@ class productsController extends Controller
         $product_tags = $products["product_tags"];
         $listTag = explode(',', $product_tags);
         foreach ($listTag as $value) {
-            # code...
             Tags::updateOrCreate(['tag_name' => $value]);
+            $q = Tags::where('tag_name',$value)->first();
+            QLTags::updateOrCreate(['ql_tags_product_id' => $product_id,'ql_tags_tag_id' => $q->tag_id]);
         }
-        // $listTagExisted = Tags::select('tag_id','tag_name')->get()->toArray();
-    //     for ($i = 0;$i < count($listTag);$i++) {
-    //         $t = false;
-    //         $tag_id = 0;
-    //         for ($j = 0;$j < count($listTagExisted);$j++) {
-    //             if ($listTag[$i] === $listTagExisted[$j]['tag_name']) {
-    //                 $tag_id = $listTagExisted[$j]['tag_id'];
-    //                 $t = true;
-    //                 break;
-    //             }
-    //         }
-    //         if (!$t) {
-    //             $tags = new Tags;
-    //             $tags->tag_name = $listTag[$i];
-    //             echo $tags->tag_name;
-    //             //$tags->save();
-    //         }
-
-    //         $qltag = new QLTags;
-    //         $qltag->ql_tags_product_id = $product_id;
-    //         if ($t) $qltag->ql_tags_tag_id = $tag_id;
-    //         else $qltag->ql_tags_tag_id = Tags::select('tag_id')->max('tag_id') + 1;
-    //         //$qltag->save();
-    //     }
+        
+        
     }
     /**
      * Display the specified resource.
