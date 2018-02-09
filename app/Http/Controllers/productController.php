@@ -83,6 +83,15 @@ class productController extends Controller
                 ]
             ],422);
         }
+        $query = Products::where('product_stock_number',$obj['product_stock_number'])->first();
+        if (!is_null($query)) {
+            return response()->json([
+                'error' => [
+                    'status' => 4,
+                    'message' => 'sản phẩm đã tồn tại'
+                ]
+            ]);
+        }
         /*lấy sản phẩm từ request*/
         $product_stock_number = $obj['product_stock_number'];
         $product_name = $obj['product_name'];
@@ -96,14 +105,15 @@ class productController extends Controller
         /*Tách chuỗi tag thành mảng*/
         $product_tags_toArray = explode(",", $product_tags);
 
+        /*Thêm tag nếu có tag mới*/
+        foreach ($product_tags_toArray as $value) {
+            Tags::updateOrCreate(['tag_name' => $value]);
+            $q = Tags::where('tag_name',$value)->first();
+            QLTags::updateOrCreate(['ql_tags_product_id' => $id,'ql_tags_tag_id' => $q->tag_id]);
+        }
+
         /*Tìm sản phẩm cần sửa*/
         $product = Products::where('product_id',$id)->first();
-        
-        /*Lấy ra toàn bộ tag*/
-        $tag     = Tags::get()->toArray();
-
-        /*Tạo một quản lý tag mới*/
-        $qltag   = new QLTags();
 
         /*Cập nhật các thuộc tính của sản phẩm*/
         $product->product_stock_number = $product_stock_number;
@@ -115,50 +125,8 @@ class productController extends Controller
         $product->product_max_quantity = $product_max_quantity;
         $product->save();
 
-        /*Gán cho ql tags product id bằng id sản phẩm*/
-        $qltag->ql_tags_product_id = $id;
+        /*Thêm dữ liệu vào bảng trung gian*/
 
-        for ($i = 0;$i < count($product_tags_toArray);$i++) {
-            $temp = true;
-            $tagId = 0;
-            for ($j = 0;$j < count($tag);$j++) {
-                if ($product_tags_toArray[$i] === $tag[$j]['tag_name']) {
-                    $temp = false;
-                    $tagId = $tag[$j]['tag_id'];
-                    break;
-                }
-            }
-            if ($temp) {
-                $t = new Tags();
-                $t->tag_name = $product_tags_toArray[$i];
-                $t->save();
-                $qltag->ql_tags_tag_id = count($tag) + 1;
-                $qltag->save();
-            }
-        }
-
-        /*Lấy lại tag*/
-        $tag2 = Tags::get()->whereIn('tag_name',$product_tags_toArray)->toArray();
-        $ql = QLTags::where('ql_tags_product_id',$id)->get()->toArray();
-        // var_dump($tag2);
-        // var_dump($ql);
-        // die();
-        foreach ($tag2 as $kq) {
-            /*Nếu không phải tag mới, tìm toàn bộ ql tag mà product có id cần tìm*/
-            $temp2 = true;
-            for ($j = 0;$j < count($ql);$j++) {
-                if ($ql[$j]['ql_tags_tag_id'] === $kq['tag_id']) {
-                    $temp2 = false;
-                    break;
-                }
-            }
-            /*Nếu tag id không tồn tại thì thêm vào bảng quản lý*/
-            if ($temp2) {
-                $qltag->ql_tags_product_id = $id;
-                $qltag->ql_tags_tag_id = $kq['tag_id'];
-                $qltag->save();
-            }
-        }
         return [
             'status' => 0,
             'message' => 'Successfull'
