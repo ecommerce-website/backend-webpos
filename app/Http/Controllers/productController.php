@@ -167,6 +167,7 @@ class productController extends Controller
     public function transformData($products) {
         //$show = json_decode(json_encode($products));
         //Trả về định dạng cho dữ liệu
+        //demo
         return [
             'product_id' => $products['product_id'],
             'product_type' => $products['product_type'],
