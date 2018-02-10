@@ -154,7 +154,7 @@ class productsController extends Controller
         $product->product_stock_number = $products["product_stock_number"];
         $product->product_name = $products["product_name"];
         $product->product_retail_price = $products["product_retail_price"];
-        $product_id = Products::select('product_id')->max('product_id') + 1;
+        
         $product->product_type = 'Regular product';
         $product->product_unit_string = 'PC';
         $product->product_unit_quantity = 1;
@@ -170,9 +170,11 @@ class productsController extends Controller
         $product->save();
 
         $barcode = new Barcodes;
+        $product_id = Products::select('product_id')->max('product_id');
         $barcode->barcode_product_id = $product_id;
         $barcode->barcode_name = "QT".str_pad(strval($product_id),10,"0",STR_PAD_LEFT);
-        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93");
+
+        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93",1,50);
         $barcode->save();
 
         $product_tags = $products["product_tags"];
