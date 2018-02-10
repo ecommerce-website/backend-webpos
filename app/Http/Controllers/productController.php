@@ -83,15 +83,6 @@ class productController extends Controller
                 ]
             ],422);
         }
-        $query = Products::where('product_stock_number',$obj['product_stock_number'])->first();
-        if (!is_null($query)) {
-            return response()->json([
-                'error' => [
-                    'status' => 4,
-                    'message' => 'sản phẩm đã tồn tại'
-                ]
-            ]);
-        }
         /*lấy sản phẩm từ request*/
         $product_stock_number = $obj['product_stock_number'];
         $product_name = $obj['product_name'];
@@ -103,18 +94,23 @@ class productController extends Controller
         $product_tags = $obj['product_tags'];
 
         /*Tách chuỗi tag thành mảng*/
-        $product_tags_toArray = explode(",", $product_tags);
+        // $product_tags_toArray = explode(",", $product_tags);
 
         /*Thêm tag nếu có tag mới*/
-        foreach ($product_tags_toArray as $value) {
-            Tags::updateOrCreate(['tag_name' => $value]);
-            $q = Tags::where('tag_name',$value)->first();
-            QLTags::updateOrCreate(['ql_tags_product_id' => $id,'ql_tags_tag_id' => $q->tag_id]);
-        }
+        // foreach ($product_tags_toArray as $value) {
+        //     Tags::updateOrCreate(['tag_name' => $value]);
+        //     $q = Tags::where('tag_name',$value)->first();
+        //     QLTags::updateOrCreate(['ql_tags_product_id' => $id,'ql_tags_tag_id' => $q->tag_id]);
+        // }
 
         /*Tìm sản phẩm cần sửa*/
-        $product = Products::where('product_id',$id)->first();
-
+        $product = Products::with(array(
+                    'barcodes',
+                    'qltags' => function($query){
+                        $query->with('tags');
+                    }
+                ))->where('product_id',$id)
+                ->first();
         /*Cập nhật các thuộc tính của sản phẩm*/
         $product->product_stock_number = $product_stock_number;
         $product->product_name = $product_name;
@@ -126,11 +122,7 @@ class productController extends Controller
         $product->save();
 
         /*Thêm dữ liệu vào bảng trung gian*/
-
-        return [
-            'status' => 0,
-            'message' => 'Successfull'
-        ];
+        return response()->json(array('success' => true, 'editedProduct' => $product),200);
     }
 
     /**

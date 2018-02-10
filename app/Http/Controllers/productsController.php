@@ -20,16 +20,16 @@ class productsController extends Controller
     public function index(Request $request)
     {
         //
-        $limit = $request->input('limit')?$request->input('limit'):8;
+        $limit = $request->input('limit')?$request->input('limit'):9;
         $products = Products::with(array(
             'barcodes',
             'qltags' => function($query){
                 $query->with('tags');
             }
         ))
-        ->orderBy('product_id','asc')
+        ->orderBy('product_id','desc')
         ->paginate($limit);
-        return response()->json($this->transformCollection($products),200);
+        return response()->json($products,200);
     }
     public function transformCollection($products) {
         //Chuyển truy vấn dạng object thành mảng
@@ -128,7 +128,6 @@ class productsController extends Controller
     public function store(Request $request)
     {
         //
-
         $product = new Products;
         $products = $request->input('product');
         if (is_null($products["product_stock_number"]) || is_null($products['product_name']) || is_null($products['product_retail_price'])) {
@@ -139,21 +138,10 @@ class productsController extends Controller
                 ]
             ],422);
         }
-
-        $query = Products::select('product_stock_number')->where('product_stock_number',$products['product_stock_number'])->first();
-        if (!is_null($query)) {
-            return response()->json([
-                'error' => [
-                    'status' => 4,
-                    'message' => 'sản phẩm đã tồn tại'
-                ]
-            ]);
-        }
        
         $product->product_stock_number = $products["product_stock_number"];
         $product->product_name = $products["product_name"];
         $product->product_retail_price = $products["product_retail_price"];
-        $product_id = Products::select('product_id')->max('product_id') + 1;
         $product->product_type = 'Regular product';
         $product->product_unit_string = 'PC';
         $product->product_unit_quantity = 1;
@@ -166,21 +154,37 @@ class productsController extends Controller
         else $product->product_max_quantity = 0;
         $product->product_description = $products["product_description"];
         $product->product_active = 1;
-        $product->save();
-
-        $barcode = new Barcodes;
-        $barcode->barcode_product_id = $product_id;
-        $barcode->barcode_name = "QT".str_pad(strval($product_id),10,"0",STR_PAD_LEFT);
-        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93");
-        $barcode->save();
-
-        $product_tags = $products["product_tags"];
-        $listTag = explode(',', $product_tags);
-        foreach ($listTag as $value) {
-            Tags::updateOrCreate(['tag_name' => $value]);
-            $q = Tags::where('tag_name',$value)->first();
-            QLTags::updateOrCreate(['ql_tags_product_id' => $product_id,'ql_tags_tag_id' => $q->tag_id]);
+        if (!$product->save()){
+            return response()->json([
+                'error' => [
+                    'status' => 1,
+                    'message' => 'Lưu product gặp lỗi!'
+                ]
+            ],422);
         }
+        $barcode = new Barcodes;
+        $barcode->barcode_product_id = $product->product_id;
+        $barcode->barcode_name = "QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT);
+        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93",1,50);
+        if ($barcode->save()){
+            return response()->json(array('success' => true), 200);
+        } else {
+            $product->delete();
+            return response()->json([
+                'error' => [
+                    'status' => 1,
+                    'message' => 'Lưu barcode gặp lỗi!'
+                ]
+            ],422);
+        }
+
+        // $product_tags = $products["product_tags"];
+        // $listTag = explode(',', $product_tags);
+        // foreach ($listTag as $value) {
+        //     Tags::updateOrCreate(['tag_name' => $value]);
+        //     $q = Tags::where('tag_name',$value)->first();
+        //     QLTags::updateOrCreate(['ql_tags_product_id' => $product_id,'ql_tags_tag_id' => $q->tag_id]);
+        // }
         
         
     }
@@ -203,7 +207,62 @@ class productsController extends Controller
      */
     public function edit($id)
     {
-        //
+        //Lẩy toàn bộ request
+        $obj = $request->input('product');
+
+        //Nếu stock number, price và name trống thì trả về thông báo
+        if (is_null($obj['product_stock_number']) || is_null($obj['product_name']) || is_null($obj['product_retail_price'])) {
+            return response()->json([
+                'error' => [
+                    'status' => 1,
+                    'message' => 'Hãy cung cấp đủ thông tin'
+                ]
+            ],422);
+        }
+        /*lấy sản phẩm từ request*/
+        $product_stock_number = $obj['product_stock_number'];
+        $product_name = $obj['product_name'];
+        $product_retail_price = $obj['product_retail_price'];
+        $product_cost = $obj['product_cost'];
+        $product_description = $obj['product_description'];
+        $product_min_quantity = $obj['product_min_quantity'];
+        $product_max_quantity = $obj['product_max_quantity'];
+        $product_tags = $obj['product_tags'];
+
+        /*Tách chuỗi tag thành mảng*/
+        // $product_tags_toArray = explode(",", $product_tags);
+
+        /*Thêm tag nếu có tag mới*/
+        // foreach ($product_tags_toArray as $value) {
+        //     Tags::updateOrCreate(['tag_name' => $value]);
+        //     $q = Tags::where('tag_name',$value)->first();
+        //     QLTags::updateOrCreate(['ql_tags_product_id' => $id,'ql_tags_tag_id' => $q->tag_id]);
+        // }
+
+        /*Tìm sản phẩm cần sửa*/
+        $product = Products::with(array(
+                    'barcodes',
+                    'qltags' => function($query){
+                        $query->with('tags');
+                    }
+                ))->where('product_id',$id)
+                ->first();
+        /*Cập nhật các thuộc tính của sản phẩm*/
+        $product->product_stock_number = $product_stock_number;
+        $product->product_name = $product_name;
+        $product->product_retail_price = $product_retail_price;
+        $product->product_cost = $product_cost;
+        $product->product_description = $product_description;
+        $product->product_min_quantity = $product_min_quantity;
+        $product->product_max_quantity = $product_max_quantity;
+        $product->save();
+
+        /*Thêm dữ liệu vào bảng trung gian*/
+        return response()->json(array('success' => true, 'editedProduct' => $product),200);
+        return [
+            'status' => 0,
+            'message' => 'Successfull'
+        ];
     }
 
     /**
