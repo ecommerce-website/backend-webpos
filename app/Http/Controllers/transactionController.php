@@ -68,7 +68,6 @@ class transactionController extends Controller
         }
 
         //optional
-        $transaction_id = Transactions::select('transaction_id')->max('transaction_id') + 1;
         $transaction_type = $transaction['transaction_type'];
         $arrProduct = $transaction['transaction_product'];
         $transaction_supplier = $transaction['transaction_supplier'];
@@ -79,14 +78,13 @@ class transactionController extends Controller
         
 
         $transactions = new Transactions();
-        $transactions->transaction_id = $transaction_id;
         $transactions->transaction_type = $transaction_type;
         $transactions->transaction_ref = $transaction_ref;
         $transactions->transaction_status = 'Posted';
         $transactions->transaction_user = 'th3Wiz';
         $transactions->save();
 
-
+        $transaction_id = Transactions::select('transaction_id')->max('transaction_id');
         for ($i = 0;$i < count($arrProduct);$i++) {
             $qlTransaction = new QLTransactions();
             $qlTransaction->ql_transactions_transaction_id = $transaction_id;
