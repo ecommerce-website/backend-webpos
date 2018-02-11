@@ -9,6 +9,8 @@ use App\Tags;
 use App\QLTags;
 use DB;
 use \Milon\Barcode\DNS1D;
+use Image;
+use File;
 
 class productsController extends Controller
 {
@@ -29,6 +31,9 @@ class productsController extends Controller
         ))
         ->orderBy('product_id','desc')
         ->paginate($limit);
+        foreach($products as $product){
+            $product->product_img = $request->root().'/'.$product->product_img;
+        }
         return response()->json($products,200);
     }
     public function transformCollection($products) {
@@ -154,6 +159,8 @@ class productsController extends Controller
         else $product->product_max_quantity = 0;
         $product->product_description = $products["product_description"];
         $product->product_active = 1;
+        $product->product_img = 'storage/img/no-image.png';
+
         if (!$product->save()){
             return response()->json([
                 'error' => [
@@ -162,13 +169,12 @@ class productsController extends Controller
                 ]
             ],422);
         }
+
         $barcode = new Barcodes;
         $barcode->barcode_product_id = $product->product_id;
         $barcode->barcode_name = "QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT);
         $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93",1,50);
-        if ($barcode->save()){
-            return response()->json(array('success' => true), 200);
-        } else {
+        if (!$barcode->save()){
             $product->delete();
             return response()->json([
                 'error' => [
@@ -178,6 +184,24 @@ class productsController extends Controller
             ],422);
         }
 
+        if (!is_null($products["product_img"])){
+            $img_data = $products["product_img"];
+            $path = 'storage/img/'."QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT).".png";
+            $img = Image::make(file_get_contents($img_data));
+            $width = $img->width();
+            $height = $img->height();
+            if($width < $height){
+                $img->crop($width, $width, 0, (int)(($height-$width)/2));
+                $img->resize(min($width, 250), min($width, 250));
+            } else {
+                $img->crop($height, $height, (int)(($width-$height)/2), 0);
+                $img->resize(min($height, 250), min($height, 250));
+            }
+            $img->save($path);
+            $product->product_img = $path;
+            $product->save();
+        }
+
         // $product_tags = $products["product_tags"];
         // $listTag = explode(',', $product_tags);
         // foreach ($listTag as $value) {
@@ -185,6 +209,7 @@ class productsController extends Controller
         //     $q = Tags::where('tag_name',$value)->first();
         //     QLTags::updateOrCreate(['ql_tags_product_id' => $product_id,'ql_tags_tag_id' => $q->tag_id]);
         // }
+        return response()->json(array('success' => true), 200);
         
         
     }
@@ -205,7 +230,7 @@ class productsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         //Lẩy toàn bộ request
         $obj = $request->input('product');
@@ -228,6 +253,7 @@ class productsController extends Controller
         $product_min_quantity = $obj['product_min_quantity'];
         $product_max_quantity = $obj['product_max_quantity'];
         $product_tags = $obj['product_tags'];
+
 
         /*Tách chuỗi tag thành mảng*/
         // $product_tags_toArray = explode(",", $product_tags);
@@ -256,6 +282,26 @@ class productsController extends Controller
         $product->product_min_quantity = $product_min_quantity;
         $product->product_max_quantity = $product_max_quantity;
         $product->save();
+
+        if (!is_null($obj["product_img"])){
+            $img_data = $obj["product_img"];
+            $path = 'storage/img/'."QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT).".png";
+            $img = Image::make(file_get_contents($img_data));
+            $width = $img->width();
+            $height = $img->height();
+            if($width < $height){
+                $img->crop($width, $width, 0, (int)(($height-$width)/2));
+                $img->resize(min($width, 250), min($width, 250));
+            } else {
+                $img->crop($height, $height, (int)(($width-$height)/2), 0);
+                $img->resize(min($height, 250), min($height, 250));
+            }
+            $img->save($path);
+            $product->product_img = $path;
+            $product->save();
+        }
+
+        $product->product_img = $request->root().'/'.$product->product_img;
 
         /*Thêm dữ liệu vào bảng trung gian*/
         return response()->json(array('status' => 0, 'message' => 'success', 'editedProduct' => $product),200);
@@ -314,6 +360,7 @@ class productsController extends Controller
             $product->qltags()->delete();
             $product->qlinvoices()->delete();
             $product->qltransactions()->delete();
+            if(file_exists($product->product_img)) File::delete($product->product_img);
             $product->delete();
         }
         return response()->json(array('status' => 0, 'message' => 'success'),200);
