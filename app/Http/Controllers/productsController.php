@@ -17,6 +17,9 @@ class productsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+    /*
+    GET ALL PRODUCTS
+    */
     public function index(Request $request)
     {
         //
@@ -45,7 +48,7 @@ class productsController extends Controller
             'to' => $productsToArray['to'],
             'total' => $productsToArray['total'],
             'status' => 0,
-            'messages' => 'Return success!',
+            'messages' => 'return success!',
             'data' => array_map([$this,'transformData'],$productsToArray['data'])
         ];
     }
@@ -106,6 +109,72 @@ class productsController extends Controller
         $tagObj->tag_id = $tag['tag_id'];
         $tagObj->tag_name = $tag['tag_name'];
         return $tagObj;
+    }
+
+    /*
+    FILTER PRODUCTS
+    */
+    public function filter(Request $request) {
+        $query = $request->input('query');
+        if (is_null($query['product_active']) && is_null($query['product_name']) && empty($query['product_tags'])) {
+            $products = Products::with(
+                array(
+                    'barcodes',
+                    'qltags' => function($query) {
+                        $query->with('tags');
+                    }
+                )
+            )
+            ->orderBy('product_id','desc')
+            ->paginate(10);
+            return response()->json($this->transformCollection($products),200);
+        }
+        else {
+            if (!is_null($query['product_name'])) $productName = $query['product_name'];
+            else $productName = '';
+            if (!is_null($query['product_active'])) $productActive = strval($query['product_active']);
+            else $productActive = '';
+            $productTags = $query['product_tags'];
+            if (empty($productTags)){
+                $products = Products::with(
+                    array(
+                        'barcodes',
+                        'qltags' => function($query) {
+                            $query->with('tags');
+                        }
+                    )
+                )
+                ->where([
+                    ['product_active','LIKE','%'.$productActive.'%'],
+                    ['product_name','LIKE','%'.$productName.'%']
+                ])
+                ->orderBy('product_id','desc')
+                ->paginate(10);
+                return response()->json($this->transformCollection($products),200);
+            }
+            else {
+                $products = Products::whereHas('qltags',function($query) use ($productTags){
+                    $query->whereHas('tags',function($query) use ($productTags){
+                        $query->whereIn('tag_name',$productTags);
+                    });
+                })
+                ->with(
+                    array(
+                        'barcodes',
+                        'qltags' => function($query) {
+                            $query->with('tags');
+                        }
+                    )
+                )
+                ->where([
+                    ['product_active','LIKE','%'.$productActive.'%'],
+                    ['product_name','LIKE','%'.$productName.'%']
+                ])
+                ->orderBy('product_id','desc')
+                ->paginate(10);
+                return response()->json($this->transformCollection($products),200);
+            }
+        }
     }
 
     /**
@@ -192,11 +261,148 @@ class productsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    /*
+    SHOW PRODUCT WITH ID
+    */
     public function show($id)
     {
         //
+         $products = Products::with(array(
+            'barcodes',
+            'qltags' => function($query){
+                $query->with('tags');
+            }
+        ))
+        ->where('product_id',$id)
+        ->orderBy('product_id','asc')
+        ->first();
+        if (is_null($products)) {
+            return [
+                'error' => [
+                    'status' => 2,
+                    'message' => 'no id found!'
+                ]
+            ];
+        }
+        return [
+            'status' => 0,
+            'message' => 'return success!',
+            'data' => response()->json($this->transformData($products),200)
+        ];
     }
 
+    /*
+    SHOW SALE'S HISTORY PRODUCT WITH ID
+    */
+    public function sale($id) {
+        $products = Products::with(
+            array(
+                'qlinvoices' => function($query) {
+                    $query->with('invoices');
+                }
+            )
+        )
+        ->where('product_id',$id)
+        ->first();
+        if (is_null($products)) {
+            return [
+                'error' => [
+                    'status' => 2,
+                    'message' => 'no id found!'
+                ]
+            ];
+        }
+        return [
+            'status' => 0,
+            'message' => 'return success!',
+            'data' => response()->json($this->transformSale($products),200)
+        ];
+    }
+    public function transformSale($products) {
+        return [
+            'product_id' => $products['product_id'],
+            'product_stock_number' => $products['product_stock_number'],
+            'product_name' => $products['product_name'],
+            'product_on_hand' => $products['product_on_hand'],
+            'ql_invoices' => $this->collectQLInvoice($products['qlinvoices'])
+        ];
+    }
+    public function collectQLInvoice($sales) {
+        $arr = [];
+        for ($i = 0;$i < count($sales);$i++) {
+            $obj = new class{};
+            $obj->ql_invoices_id = $sales[$i]['ql_invoices_id'];
+            $obj->invoices = $this->collectInvoices($sales[$i]['invoices']);
+            array_push($arr,$obj);
+        }
+        return $arr;
+    }
+    public function collectInvoices($sales) {
+        $obj = new class{};
+        $obj->invoice_id = $sales['invoice_id'];
+        $obj->invoice_date = $sales['invoice_date'];
+        $obj->invoice_transaction_type = $sales['invoice_transaction_type'];
+        $obj->invoice_quantity_bought = $sales['invoice_quantity_bought'];
+        $obj->invoice_total = $sales['invoice_total'];
+        return $obj;
+    }
+
+
+    /*
+    SHOW TRANSACTION'S HISTORY PRODUCT WITH ID
+    */
+    public function transaction($id) {
+        $products = Products::with(
+            array(
+                'qltransactions' => function($query){
+                    $query->with('transactions');
+                }
+            )
+        )
+        ->where('product_id',$id)
+        ->first();
+        if (is_null($products)) {
+            return [
+                'error' => [
+                    'status' => 2,
+                    'message' => 'no id found!'
+                ]
+            ];
+        }
+        return [
+            'status' => 0,
+            'message' => 'return success!',
+            'data' => response()->json($this->transformTrans($products),200)
+        ];
+    }
+    public function transformTrans($trans) {
+        return [
+            'product_id' => $trans['product_id'],
+            'product_stock_number' => $trans['product_stock_number'],
+            'product_name' => $trans['product_name'],
+            'product_on_hand' => $trans['product_on_hand'],
+            'ql_transactions' => $this->collectQLTransaction($trans['qltransactions'])
+        ];
+    }
+    public function collectQLTransaction($trans) {
+        $arr = [];
+        for ($i = 0;$i < count($trans);$i++) {
+            $obj = new class{};
+            $obj->ql_transactions_id = $trans[$i]['ql_transactions_id'];
+            $obj->ql_transactions_quantity = $trans[$i]['ql_transactions_quantity_bought'];
+            $obj->transactions = $this->collectInvoices($trans[$i]['transactions']);
+            array_push($arr,$obj);
+        }
+        return $arr;
+    }
+    public function collectTransactions($trans) {
+        $obj = new class{};
+        $obj->transaction_id = $trans['transaction_id'];
+        $obj->transaction_date = $trans['transaction_date'];
+        $obj->transaction_type = $trans['transaction_type'];
+        $obj->transaction_related_party = $trans['transaction_related_party'];
+        return $obj;
+    }
     /**
      * Show the form for editing the specified resource.
      *
