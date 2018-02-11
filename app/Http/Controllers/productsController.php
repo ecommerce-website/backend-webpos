@@ -258,11 +258,7 @@ class productsController extends Controller
         $product->save();
 
         /*Thêm dữ liệu vào bảng trung gian*/
-        return response()->json(array('success' => true, 'editedProduct' => $product),200);
-        return [
-            'status' => 0,
-            'message' => 'Successfull'
-        ];
+        return response()->json(array('status' => 0, 'message' => 'success', 'editedProduct' => $product),200);
     }
 
     /**
@@ -290,10 +286,7 @@ class productsController extends Controller
             else if ($product->product_active === 0) $product->product_active = 1;
             $product->save();
         }
-        return response()->json([
-            'status' => 0,
-            'message' => 'success'
-        ]);
+        return response()->json(array('status' => 0, 'message' => 'success'),200);
     }
 
     /**
@@ -317,12 +310,13 @@ class productsController extends Controller
 
         foreach ($product as $p) {
             $product = Products::find($p);
+            $product->barcodes()->delete();
+            $product->qltags()->delete();
+            $product->qlinvoices()->delete();
+            $product->qltransactions()->delete();
             $product->delete();
         }
-        return response()->json([
-            'status' => 0,
-            'message' => 'success'
-        ]);
+        return response()->json(array('status' => 0, 'message' => 'success'),200);
     }
     public function productBarcode($product) {
         $arr = [];
