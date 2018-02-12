@@ -26,7 +26,7 @@ class productBarcodeSearch extends Controller
                     }
                 )
             )
-            ->paginate(10);
+            ->paginate(9);
             return response()->json($this->transformCollection($product),200);
         }
         else {
@@ -34,22 +34,8 @@ class productBarcodeSearch extends Controller
                         ->join('barcodes', 'products.product_id', '=', 'barcodes.barcode_product_id')
                         ->where('product_name', 'LIKE', '%'.$search.'%')
                         ->orWhere('barcode_name', 'LIKE', '%'.$search.'%')
-                        ->paginate(10);
-            return response()->json($this->transformCollection($products), 200);
-            // $product = Products::whereHas('barcodes',function($query) use ($pro){
-            //     $query->where('barcode_name','LIKE','%'.$pro.'%');
-            // })
-            // ->with(
-            //     array(
-            //         'barcodes',
-            //         'qltags' => function($query) {
-            //             $query->with('tags');
-            //         }
-            //     )
-            // )
-            // ->where('product_name','LIKE','%'.$pro.'%')
-            // ->paginate(10);
-            // return response()->json($this->transformCollection($product),200);
+                        ->paginate(9);
+            return response()->json($products, 200);
         }
        
     }
