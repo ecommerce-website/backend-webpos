@@ -18,10 +18,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 Route::group(['prefix' => 'rest/v1/products'],function() {
 	Route::get('/','productsController@index'); //OK
-	Route::post('filter','productsFilter@index'); //OK
-	Route::get('show/{id}','productController@index'); //OK
+	Route::post('filter','productsController@filter'); //OK
+	Route::get('show/{id}','productsController@show'); //OK
 	Route::post('edit/{id}','productsController@edit');//OK
-	Route::post('update/{id}','productController@update');//OK
+	Route::post('update/{id}','productsController@update');//OK
 	
 	Route::get('sales/{id}','productsSaleController@index'); //OK
 	Route::get('transactions/{id}','productsTransController@index'); //OK
@@ -29,8 +29,8 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 	Route::post('delete','productsController@destroy');//OK
 	Route::post('active','productsController@update');//OK
 
-	Route::post('query','productBarcodeSearch@query');//OK
-	Route::post('search','productBarcodeSearch@search');//OK
+	Route::post('query','productsController@query');//OK
+	Route::post('search','productsController@search');//OK
 
 });
 Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
@@ -39,9 +39,9 @@ Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
 });
 Route::group(['prefix' => 'rest/v1/transactions'],function(){
 	Route::get('/','transactionsController@index'); //OK
-	Route::get('show/{id}','transactionController@index'); //OK
-	Route::post('update/{id}','transactionController@update');//OK
-	Route::post('store','transactionController@store'); //OK
+	Route::get('show/{id}','transactionsController@show'); //OK
+	Route::post('update/{id}','transactionsController@update');//OK
+	Route::post('store','transactionsController@store'); //OK
 	Route::post('search','transactionsController@search');//OK
 	Route::post('searchProduct','transactionsController@searchProduct');//OK
 });

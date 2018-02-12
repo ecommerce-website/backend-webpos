@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Transactions;
 use App\Products;
+use App\QLTransactions;
 use DB;
 
 class transactionsController extends Controller
@@ -19,13 +20,13 @@ class transactionsController extends Controller
         //
         $transactions = Transactions::orderBy('transaction_id','desc')
         ->paginate(10);
-        return response()->json($this->transformCollection($transactions),200);
+        return response()->json($transactions,200);
     }
     public function search(Request $request) {
         $query = $request->input('query');
         if (is_null($query['transaction_name']) && is_null($query['transaction_date_begin']) && is_null($query['transaction_date_end'])) {
             $transactions = Transactions::orderBy('transaction_id','desc')->paginate(10);
-            return response()->json($this->transformCollection($transactions),200);
+            return response()->json($transactions,200);
         }
         else {
             if (is_null($query['transaction_date_begin'])) {
@@ -33,7 +34,7 @@ class transactionsController extends Controller
                     $transactions = Transactions::orderBy('transaction_id','desc')
                     ->where('transaction_ref','LIKE','%'.$query['transaction_name'].'%')
                     ->paginate(10);
-                    return response()->json($this->transformCollection($transactions),200);
+                    return response()->json($transactions,200);
                 }
                 else {
                     $transactions = Transactions::orderBy('transaction_id','desc')
@@ -42,7 +43,7 @@ class transactionsController extends Controller
                         ['transaction_created_at','<=',$query['transaction_date_end']]
                     ])
                     ->paginate(10);
-                    return response()->json($this->transformCollection($transactions),200);
+                    return response()->json($transactions,200);
                 }
             }
             else {
@@ -53,7 +54,7 @@ class transactionsController extends Controller
                         ['transaction_created_at','>=',$query['transaction_date_begin']]
                     ])
                     ->paginate(10);
-                    return response()->json($this->transformCollection($transactions),200);
+                    return response()->json($transactions,200);
                 }
                 else {
                     $transactions = Transactions::orderBy('transaction_id','desc')
@@ -63,7 +64,7 @@ class transactionsController extends Controller
                         ['transaction_created_at','<=',$query['transaction_date_end']]
                     ])
                     ->paginate(10);
-                    return response()->json($this->transformCollection($transactions),200);
+                    return response()->json($transactions,200);
                 }
             }
         }
@@ -77,7 +78,7 @@ class transactionsController extends Controller
             ['product_stock_number','LIKE','%'.$query['product_stock_number'].'%']
         ])
         ->paginate(10);
-        return response()->json($this->transformCollection($product),200);
+        return response()->json($product,200);
     }
 
     /**
@@ -85,31 +86,69 @@ class transactionsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
-    {
-        //
+    public function create(){
+        
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
+    public function store(Request $request){
+        //require
+        $transaction = $request->input('transaction');
+
+        if (is_null($transaction['transaction_type']) || empty($transaction['transaction_product'])) {
+            return response()->json(array('status'=>1,'message'=>'Cung cap du thong tin!'),422);
+        }
+
+        //optional
+        $transaction_type = $transaction['transaction_type'];
+        $arrProduct = $transaction['transaction_product'];
+        $transaction_supplier = $transaction['transaction_supplier'];
+        $transaction_ref = $transaction['transaction_ref'];
+        $transaction_remark = $transaction['transaction_remark'];
+        
+        $transactions = new Transactions();
+        $transactions->transaction_supplier = $transaction_supplier;
+        $transactions->transaction_type = $transaction_type;
+        $transactions->transaction_ref = $transaction_ref;
+        $transactions->transaction_remark = $transaction_remark;
+        $transactions->transaction_status = 'OK';
+        $transactions->transaction_user = 'admin';
+        $transactions->save();
+
+        foreach ($arrProduct as $product) {
+            $qlTransaction = new QLTransactions();
+            $qlTransaction->ql_transactions_transaction_id = $transactions->transaction_id;
+            $qlTransaction->ql_transactions_product_id = $product['product_id'];
+            $qlTransaction->ql_transactions_cost = $product['product_cost'];
+            $qlTransaction->ql_transactions_quantity_bought = $product['product_quantity_bought'];
+            $query = Products::where('product_id',$product['product_id'])->first();
+            if (!is_null($query)){
+                $query->product_on_hand = $query->product_on_hand + $qlTransaction->ql_transactions_quantity_bought;
+                $query->save();
+            $qlTransaction->save();
+            }
+        }
+        return response()->json(array('success' => true), 200);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
+    public function show($id){
         //
+        $transactions = Transactions::with(array(
+            'qltransactions' => function($query) {
+                $query->with('products');
+            }
+        ))
+        ->where('transaction_id',$id)
+        ->first();
+        if (is_null($transactions)) {
+            return response()->json([
+                'error' => [
+                    'status'=> 2,
+                    'message' => 'no Id found'
+                ]
+            ]);
+        }
+        return response()->json($transactions,200);
+        
     }
 
     /**
@@ -123,16 +162,25 @@ class transactionsController extends Controller
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
+    public function update(Request $request, $id){
+        $transaction = Transactions::where('transaction_id',$id)
+        ->first();
+
+        if (is_null($transaction)) {
+            return response()->json([
+                'error' => [
+                    'status' => 2,
+                    'message' => 'no Id found'
+                ]
+            ]);
+        }
+
+        if ($transaction['transaction_status'] === 'Posted') $transaction['transaction_status'] = 'Voided';
+        $transaction->save();
+        return response()->json([
+            'status' => 0,
+            'message' => 'Successful!'
+        ]);
     }
 
     /**
@@ -144,40 +192,5 @@ class transactionsController extends Controller
     public function destroy($id)
     {
         //
-    }
-    public function transformCollection($transactions) {
-        $transactionsToArray = $transactions->toArray();
-        return [
-            'first_page_url' => $transactionsToArray['first_page_url'],
-            'last_page_url' => $transactionsToArray['last_page_url'],
-            'next_page_url' => $transactionsToArray['next_page_url'],
-            'prev_page_url' => $transactionsToArray['prev_page_url'],
-            'from' => $transactionsToArray['from'],
-            'to' => $transactionsToArray['to'],
-            'total' => $transactionsToArray['total'],
-            'status' => 0,
-            'message' => 'Successful!',
-            'data' => array_map([$this,'transformProduct'],$transactionsToArray['data'])
-        ];
-    }
-    public function transformProduct($transactions) {
-        $transactions = json_decode(json_encode($transactions),true);
-        return [
-            'product_id' => $transactions['product_id'],
-            'product_name' => $transactions['product_name'],
-            'product_unit_string' => $transactions['product_unit_string'],
-            'product_stock_number' => $transactions['product_stock_number']
-        ];
-    }
-    public function transform($transactions) {
-        $transactions = json_decode(json_encode($transactions),true);
-        return [
-            'transaction_id' => $transactions['transaction_id'],
-            'transaction_ref' => $transactions['transaction_ref'],
-            'transaction_type' => $transactions['transaction_type'],
-            'transaction_date' => $transactions['created_at'],
-            'transaction_status' => $transactions['transaction_status'],
-            'transaction_user' => $transactions['transaction_user']
-        ];
     }
 }
