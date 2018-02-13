@@ -76,7 +76,7 @@ class productsController extends Controller
         $barcode = new Barcodes;
         $barcode->barcode_product_id = $product->product_id;
         $barcode->barcode_name = "QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT);
-        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C93",1,50);
+        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C128");
         if (!$barcode->save()){
             $product->delete();
             return response()->json([
@@ -242,7 +242,7 @@ class productsController extends Controller
             $product->qltags()->delete();
             $product->qlinvoices()->delete();
             $product->qltransactions()->delete();
-            if(file_exists($product->product_img)) File::delete($product->product_img);
+            if($product->product_img != 'storage/img/no-image.png' && file_exists($product->product_img)) File::delete($product->product_img);
             $product->delete();
         }
         return response()->json(array('status' => 0, 'message' => 'success'),200);
@@ -334,6 +334,14 @@ class productsController extends Controller
                     ->join('barcodes', 'products.product_id', '=', 'barcodes.barcode_product_id')
                     ->where('barcode_name', '=', $barcode_name)
                     ->distinct()->orderBy('product_id','desc')->first();
+        if(is_null($product)){
+            return response()->json([
+                'error' => [
+                    'status' => 2,
+                    'message' => 'No barcode found'
+                ]
+            ],422);
+        }
         $product->product_img = $request->root().'/'.$product->product_img;
         return response()->json($product, 200);
     }

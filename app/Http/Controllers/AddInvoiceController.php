@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Invoices;
+use App\QLInvoices;
 use Carbon\Carbon;
 use DB;
 
@@ -19,48 +20,52 @@ class AddInvoiceController extends Controller
        
     }
     public function postInvoice(Request $request){
-
         $qlinvoice = $request->input('qlinvoice');
-       // var_dump($qlinvoice['invoice_user_id']);die();
-        $invoice_user_id = $qlinvoice['invoice_user_id'];
-        $invoice_customer_id = $qlinvoice['invoice_customer_id'];
-        $invoice_total = $qlinvoice['invoice_total'];
-        $invoice_quantity_bought = $qlinvoice['invoice_quantity_bought'];
-        $invoice_remark = $qlinvoice['invoice_remark'];
-        $invoice_date = $qlinvoice['invoice_date'];
 
-        $ql_invoices_discount = $qlinvoice['ql_invoices_discount'];
-      
-        $ql_invoices_product_id = $qlinvoice['ql_invoices_product_id'];
-        // var_dump($ql_invoices_product_id);die();
-        $ql_invoices_quantity_bought = $qlinvoice['ql_invoices_quantity_bought'];
-
-       // var_dump($qlinvoice);die();
-
-        $arr1 = [
-        'invoice_user_id'=> $invoice_user_id,
-        'invoice_customer_id' =>  $invoice_customer_id,
-        'invoice_total' => $invoice_total,
-        'invoice_quantity_bought' => $invoice_quantity_bought,
-        'invoice_remark' => $invoice_remark,
-        'invoice_date' => $invoice_date,
-        ];
-        DB::table('invoices')->insert($arr1);
-
-        $id_invoice = DB::table('invoices')->max('invoice_id');
-
-       // var_dump($ql_invoices_product_id[0]["id"]);die();
-
-        for($i=0;$i<count($ql_invoices_product_id);$i++){
-            $arr2 = [
-            'ql_invoices_invoice_id' => $id_invoice,
-            'ql_invoices_product_id' => $ql_invoices_product_id[$i]["id"],
-            'ql_invoices_quantity_bought' => $ql_invoices_quantity_bought[$i]["id"],     
-            'ql_invoices_discount' => $ql_invoices_discount[$i]["id"],
-            ];
-          //  var_dump($arr2);die();
-            DB::table('ql_invoices')->insert($arr2);
+        $invoices = new Invoices();
+        $invoices->invoice_user_id = $qlinvoice['invoice_user_id'];
+        $invoices->invoice_customer_id = $qlinvoice['invoice_customer_id'];
+        $invoices->invoice_total = $qlinvoice['invoice_total'];
+        $invoices->invoice_quantity_bought = $qlinvoice['invoice_quantity_bought'];
+        if(!$invoices->save()){
+            return response()->json([
+                'error' => [
+                    'status' => 1,
+                    'message' => 'Lưu hóa đơn gặp lỗi!'
+                ]
+            ],422);
         }
+
+        $invoice_products = $qlinvoice['invoice_products'];
+        $ql_invoices_ids = array();
+        foreach($invoice_products as $product){
+            $ql_invoices = new QLInvoices();
+            $ql_invoices->ql_invoices_invoice_id = $invoices->invoice_id;
+            $ql_invoices->ql_invoices_product_id = $product['product_id'];
+            $ql_invoices->ql_invoices_product_retail_price = $product['product_retail_price'];
+            $ql_invoices->ql_invoices_discount = $product['product_discount'];
+            $ql_invoices->ql_invoices_quantity_bought = $product['product_count'];
+            $ql_invoices->ql_invoices_line_note = "";
+            if($ql_invoices->save()){
+                array_push($ql_invoices_ids, $ql_invoices->ql_invoices_id);
+            } else {
+                foreach($ql_invoices_ids as $id){
+                    QLInvoices::find($id)->delete();
+                    $invoices->delete();
+                }
+                return response()->json([
+                    'error' => [
+                        'status' => 1,
+                        'message' => 'Lưu hóa đơn gặp lỗi 2!'
+                    ]
+                ],422);
+            }
+        }
+        return response()->json(array(
+            'invoice_id' => $invoices->invoice_id, 
+            'invoice_date' => date_format(date_create(Invoices::find($invoices->invoice_id)->invoice_date), "d-m-Y H:i:s"),
+            'success' => true
+        ),200);
     }
 
     /**
