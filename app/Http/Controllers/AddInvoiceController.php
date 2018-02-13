@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Invoices;
 use App\QLInvoices;
 use Carbon\Carbon;
+use App\Products;
 use DB;
 
 class AddInvoiceController extends Controller
@@ -38,15 +39,17 @@ class AddInvoiceController extends Controller
 
         $invoice_products = $qlinvoice['invoice_products'];
         $ql_invoices_ids = array();
-        foreach($invoice_products as $product){
+        foreach($invoice_products as $invoice_product){
             $ql_invoices = new QLInvoices();
             $ql_invoices->ql_invoices_invoice_id = $invoices->invoice_id;
-            $ql_invoices->ql_invoices_product_id = $product['product_id'];
-            $ql_invoices->ql_invoices_product_retail_price = $product['product_retail_price'];
-            $ql_invoices->ql_invoices_discount = $product['product_discount'];
-            $ql_invoices->ql_invoices_quantity_bought = $product['product_count'];
+            $ql_invoices->ql_invoices_product_id = $invoice_product['product_id'];
+            $ql_invoices->ql_invoices_product_retail_price = $invoice_product['product_retail_price'];
+            $ql_invoices->ql_invoices_discount = $invoice_product['product_discount'];
+            $ql_invoices->ql_invoices_quantity_bought = $invoice_product['product_count'];
             $ql_invoices->ql_invoices_line_note = "";
-            if($ql_invoices->save()){
+            $product = Products::find($invoice_product['product_id']);
+            $product->product_on_hand -= $invoice_product['product_count'];
+            if($ql_invoices->save() && $product->save()){
                 array_push($ql_invoices_ids, $ql_invoices->ql_invoices_id);
             } else {
                 foreach($ql_invoices_ids as $id){

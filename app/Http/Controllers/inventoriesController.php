@@ -16,7 +16,6 @@ class inventoriesController extends Controller
     {
         //
         $products = Products::with(array(
-            'barcodes',
             'qltags' => function($query){
                 $query->with('tags');
             }

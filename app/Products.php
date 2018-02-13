@@ -10,9 +10,6 @@ class Products extends Model
     protected $table = 'products';
     protected $primaryKey = 'product_id';
     protected $fillable = ['product_id'];
-    public function barcodes() {
-    	return $this->hasMany('App\Barcodes','barcode_product_id','product_id');
-    }
     public function qltags() {
     	return $this->hasMany('App\QLTags','ql_tags_product_id','product_id');
     }

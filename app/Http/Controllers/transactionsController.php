@@ -127,7 +127,8 @@ class transactionsController extends Controller
             $qlTransaction->save();
             }
         }
-        return response()->json(array('success' => true), 200);
+        $transaction = Transactions::find($transactions->transaction_id);
+        return response()->json(array('transaction' => $transaction,'success' => true), 200);
     }
 
     public function show($id){

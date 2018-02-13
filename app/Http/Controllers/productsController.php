@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Products;
-use App\Barcodes;
 use App\Tags;
 use App\QLTags;
 use DB;
@@ -18,7 +17,6 @@ class productsController extends Controller
     public function index(Request $request){
         $limit = $request->input('limit')?$request->input('limit'):9;
         $products = Products::with(array(
-            'barcodes',
             'qltags' => function($query){
                 $query->with('tags');
             }
@@ -73,11 +71,9 @@ class productsController extends Controller
             ],422);
         }
 
-        $barcode = new Barcodes;
-        $barcode->barcode_product_id = $product->product_id;
-        $barcode->barcode_name = "QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT);
-        $barcode->barcode_img = DNS1D::getBarcodePNG($barcode->barcode_name,"C128");
-        if (!$barcode->save()){
+        $product->product_barcode_name = "QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT);
+        $product->product_barcode_img = DNS1D::getBarcodePNG($product->product_barcode_name,"C128", 3, 150);
+        if (!$product->save()){
             $product->delete();
             return response()->json([
                 'error' => [
@@ -119,10 +115,15 @@ class productsController extends Controller
 
     public function show($id){
         $product = Products::with(array(
-            'barcodes',
             'qltags' => function($query) {
                 $query->with('tags');
-            }
+            },
+            'qlinvoices' => function($query) {
+                $query->with('invoices')->orderBy('ql_invoices_id', 'desc')->take(100);
+            },
+            'qltransactions' => function($query) {
+                $query->with('transactions')->orderBy('ql_transactions_id', 'desc')->take(100);
+            },
         ))
         ->where('product_id',$id)
         ->first();
@@ -166,7 +167,6 @@ class productsController extends Controller
 
         /*Tìm sản phẩm cần sửa*/
         $product = Products::with(array(
-                    'barcodes',
                     'qltags' => function($query){
                         $query->with('tags');
                     }
@@ -238,7 +238,6 @@ class productsController extends Controller
 
         foreach ($product as $p) {
             $product = Products::find($p);
-            $product->barcodes()->delete();
             $product->qltags()->delete();
             $product->qlinvoices()->delete();
             $product->qltransactions()->delete();
@@ -251,7 +250,7 @@ class productsController extends Controller
     public function productBarcode($product) {
         $arr = [];
         for ($i = 0;$i < count($product);$i++) {
-            array_push($arr, $product['barcode_id'],$product['barcode_name'],$product['barcode_img']);
+            array_push($arr, $product['product_barcode_name'],$product['product_barcode_img']);
         }
         return $arr;
     }
@@ -261,7 +260,6 @@ class productsController extends Controller
         $obj = $request->input('product');
         if (is_null($obj['product_name']) && is_null($obj['product_active']) && empty($obj['product_tag'])) {
             $products = Products::with(array(
-                'barcodes',
                 'qltags' => function($query){
                     $query->with('tags');
                 }
@@ -281,7 +279,6 @@ class productsController extends Controller
                 }
             )
             ->with(array(
-                'barcodes',
                 'qltags' => function($query) {
                     $query->with('tags');
                 }
@@ -301,7 +298,6 @@ class productsController extends Controller
         if ($search === "") {
             $product = Products::with(
                 array(
-                    'barcodes',
                     'qltags'=>function($query) {
                         $query->with('tags');
                     }
@@ -315,12 +311,18 @@ class productsController extends Controller
             return response()->json($product,200);
         }
         else {
-            $products = DB::table('products')
-                        ->join('barcodes', 'products.product_id', '=', 'barcodes.barcode_product_id')
-                        ->where('product_name', 'LIKE', '%'.$search.'%')
-                        ->orWhere('barcode_name', 'LIKE', '%'.$search.'%')
-                        ->distinct()
-                        ->paginate(9);               
+            $products = Products::with(
+                array(
+                    'qltags'=>function($query) {
+                        $query->with('tags');
+                    }
+                )
+            )
+            ->where('product_name', 'LIKE', '%'.$search.'%')
+            ->orWhere('product_barcode_name', 'LIKE', '%'.$search.'%')
+            ->distinct()
+            ->orderBy('product_id','desc')
+            ->paginate(9);                
             foreach($products as $product){
                 $product->product_img = $request->root().'/'.$product->product_img;
             }
@@ -330,10 +332,17 @@ class productsController extends Controller
     }
     public function search(Request $request){
         $barcode_name = $request->input('barcode_name');
-        $product = DB::table('products')
-                    ->join('barcodes', 'products.product_id', '=', 'barcodes.barcode_product_id')
-                    ->where('barcode_name', '=', $barcode_name)
-                    ->distinct()->orderBy('product_id','desc')->first();
+        $product = Products::with(
+                array(
+                    'qltags'=>function($query) {
+                        $query->with('tags');
+                    }
+                )
+            )
+            ->where('product_barcode_name', '=', $barcode_name)
+            ->distinct()
+            ->orderBy('product_id','desc')
+            ->first();
         if(is_null($product)){
             return response()->json([
                 'error' => [
