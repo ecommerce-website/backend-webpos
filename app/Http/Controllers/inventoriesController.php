@@ -12,10 +12,12 @@ class inventoriesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
-    {
+    /*
+    GET ALL INVENTORY
+    */
+    public function index(Request $request) {
         //
-        $products = Products::with(array(
+        $inventory = Products::with(array(
             'barcodes',
             'qltags' => function($query){
                 $query->with('tags');
@@ -23,7 +25,25 @@ class inventoriesController extends Controller
         ))
         ->orderBy('product_id','asc')
         ->get();
-        return response()->json($this->transformCollection($products),200);
+        return response()->json($inventory,200);
+    }
+
+    /*
+    SEARCH INVENTORY BY NAME
+    */
+    public function filter(Request $request) {
+        $productName = $request->input('product_name');
+        if (is_null($productName)) {
+            $inventory = Products::orderBy('product_id','desc')->get();
+            return response()->json($inventory,200);
+        }
+        else{
+            $productName = strtolower($productName);
+            $inventory = Products::orderBy('product_id','desc')
+            ->where('product_name','LIKE','%'.$productName.'%')
+            ->get();
+            return response()->json($inventory,200);    
+        }
     }
 
     /**
@@ -90,27 +110,5 @@ class inventoriesController extends Controller
     public function destroy($id)
     {
         //
-    }
-    public function transformCollection($products) {
-        //Chuyển truy vấn dạng object thành mảng
-        $productsToArray = $products->toArray();
-        return [    
-            'status' => 0,
-            'messages' => 'Return success!',
-            'data' => array_map([$this,'transformData'],$productsToArray)
-        ];
-    }
-    public function transformData($products) {
-        //$show = json_decode(json_encode($products));
-        //Trả về định dạng cho dữ liệu
-        return [
-            'product_id' => $products['product_id'],
-            'product_stock_number' => $products['product_stock_number'],
-            'product_name' => $products['product_name'],
-            'product_unit_string' => $products['product_unit_string'],
-            'product_unit_quantity' => $products['product_unit_quantity'],
-            'product_on_hand' => $products['product_on_hand'],
-            'product_retail_price' => $products['product_retail_price']
-        ];
     }
 }

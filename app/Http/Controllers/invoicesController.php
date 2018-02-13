@@ -12,39 +12,64 @@ class invoicesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+    /*
+    GET ALL INVOICE
+    */
+    public function index() {
         //
         $invoices = Invoices::orderBy('invoice_id','desc')->paginate(10);
-        return response()->json($this->transformCollection($invoices),200);
+        return response()->json($invoices,200);
     }
-
-    public function transformCollection($invoices) {
-        $invoicesToArray = $invoices->toArray();
-        return [
-            'current_page' => $invoicesToArray['current_page'],
-            'first_page_url' => $invoicesToArray['first_page_url'],
-            'last_page_url' => $invoicesToArray['last_page_url'],
-            'next_page_url' => $invoicesToArray['next_page_url'],
-            'prev_page_url' => $invoicesToArray['prev_page_url'],
-            'per_page' => $invoicesToArray['per_page'],
-            'from' => $invoicesToArray['from'],
-            'to' => $invoicesToArray['to'],
-            'total' => $invoicesToArray['total'],
-            'status' => 0,
-            'messages' => 'Return success!',
-            'data' => array_map([$this,'transform'], $invoicesToArray['data'])
-        ];
-    }
-
-    public function transform($invoice) {
-        return [
-            'invoice_id' => $invoice['invoice_id'],
-            'invoice_ref' => $invoice['invoice_ref'],
-            'invoice_date' => $invoice['created_at'],
-            'invoice_transaction_type' => $invoice['invoice_transaction_type'],
-            'invoice_status' => $invoice['invoice_status']
-        ];
+    /*
+    FILTER INVOICE
+    */
+    public function filter(Request $request) {
+        //
+        $invoice = $request->input('invoice');
+        if (is_null($invoice['invoice_ref']) && is_null($invoice['invoice_date_begin']) && is_null($invoice['invoice_date_end'])) {
+            $invoices = Invoices::orderBy('invoice_id','desc')->paginate(10);
+            return response()->json($invoices,200);
+        }
+        else {
+            if (is_null($invoice['invoice_date_begin'])) {
+                if (is_null($invoice['invoice_date_end'])) {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%']
+                                ])
+                                ->paginate(10);
+                    return response()->json($invoices,200);
+                }
+                else {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%']
+                                ])
+                                ->whereDate('created_at','<=','%'.$invoice['invoice_date_end'].'%')
+                                ->paginate(10);
+                    return response()->json($invoices,200);
+                }
+            }
+            else {
+                if (is_null($invoice['invoice_date_end'])) {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%']
+                                ])
+                                ->whereDate('created_at','>=','%'.$invoice['invoice_date_begin'].'%')
+                                ->paginate(10);
+                    return response()->json($invoices,200);
+                }
+                else {
+                    $invoices = Invoices::orderBy('invoice_id','desc')->where([
+                                    ['invoice_ref','LIKE','%'.$invoice['invoice_ref'].'%']
+                                ])
+                                ->whereDate([
+                                    ['created_at','<=','%'.$invoice['invoice_date_end'].'%'],
+                                    ['created_at','>=','%'.$invoice['invoice_date_begin'].'%']
+                                ])
+                                ->paginate(10);
+                    return response()->json($this->transformCollection($invoices),200);
+                }
+            }
+        }
     }
 
     /**
@@ -74,9 +99,24 @@ class invoicesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    /*
+    SHOW INVOICE WITH ID
+    */
     public function show($id)
     {
         //
+        $invoice = Invoices::with(
+            array(
+                'customers',
+                'ql_invoices'=>function($query) {
+                    $query->with('products');
+                }
+            )
+        )
+        ->where('invoice_id',$id)
+        ->first();
+        if (is_null($invoice)) return response()->json('no id found!',422);
+        return response()->json($invoice,200);
     }
 
     /**
@@ -97,9 +137,16 @@ class invoicesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+    /*
+    UPDATE INVOICE
+    */
     public function update(Request $request, $id)
     {
         //
+        $invoice = Invoices::where('invoice_id',$id)->first();
+        if (is_null($invoice)) return response()->json('no id found!',422);
+        if ($invoice->invoice_status === 'Posted') $invoice->invoice_status = 'Voided';
+        $invoice->save();
     }
 
     /**

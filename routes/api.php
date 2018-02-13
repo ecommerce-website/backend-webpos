@@ -29,27 +29,27 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 	Route::post('delete','productsController@destroy');//OK
 	Route::post('active','productsController@update');//OK
 
-	Route::post('query','productBarcodeSearch@query');//OK
+	Route::post('query','productsController@query');//OK
 	Route::post('search','productBarcodeSearch@search');//OK
 
 });
 Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
 	Route::get('/','inventoriesController@index'); //OK
-	Route::get('filter','inventoriesFilter@index');	//OK
+	Route::post('filter','inventoriesController@filter');	//OK
 });
 Route::group(['prefix' => 'rest/v1/transactions'],function(){
 	Route::get('/','transactionsController@index'); //OK
-	Route::get('show/{id}','transactionController@index'); //OK
-	Route::post('update/{id}','transactionController@update');//OK
-	Route::post('store','transactionController@store'); //OK
+	Route::get('show/{id}','transactionsController@show'); //OK
+	Route::post('update/{id}','transactionsController@update');//OK
+	Route::post('store','transactionsController@store'); //OK
 	Route::post('search','transactionsController@search');//OK
 	Route::post('searchProduct','transactionsController@searchProduct');//OK
 });
 Route::group(['prefix' => 'rest/v1/invoices'],function(){
 	Route::get('/','invoicesController@index');//OK
-	Route::get('show/{id}','invoiceController@index');//OK
-	Route::post('update/{id}','invoiceController@update');//OK
-	Route::post('filter','invoiceFilter@index');
+	Route::get('show/{id}','invoicesController@show');//OK
+	Route::post('update/{id}','invoicesController@update');//OK
+	Route::post('filter','invoicesController@filter');
 });
 
 Route::group(['prefix' => 'rest/v1'], function(){
