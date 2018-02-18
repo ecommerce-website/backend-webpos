@@ -72,7 +72,7 @@ class productsController extends Controller
         }
 
         $product->product_barcode_name = "QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT);
-        $product->product_barcode_img = DNS1D::getBarcodePNG($product->product_barcode_name,"C128", 3, 150);
+        $product->product_barcode_img = DNS1D::getBarcodePNG($product->product_barcode_name,"C128", 2, 150);
         if (!$product->save()){
             $product->delete();
             return response()->json([
@@ -85,7 +85,7 @@ class productsController extends Controller
 
         if (!is_null($products["product_img"])){
             $img_data = $products["product_img"];
-            $path = 'storage/img/'."QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT).".png";
+            $path = 'storage/img/'."QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT)."_".time().".png";
             $img = Image::make(file_get_contents($img_data));
             $width = $img->width();
             $height = $img->height();
@@ -183,8 +183,11 @@ class productsController extends Controller
         $product->save();
 
         if (!is_null($obj["product_img"])){
+            if($product->product_img != 'storage/img/no-image.png' && file_exists($product->product_img)){
+                File::delete($product->product_img);
+            }
             $img_data = $obj["product_img"];
-            $path = 'storage/img/'."QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT).".png";
+            $path = 'storage/img/'."QT".str_pad(strval($product->product_id),6,"0",STR_PAD_LEFT)."_".time().".png";
             $img = Image::make(file_get_contents($img_data));
             $width = $img->width();
             $height = $img->height();
@@ -241,7 +244,9 @@ class productsController extends Controller
             $product->qltags()->delete();
             $product->qlinvoices()->delete();
             $product->qltransactions()->delete();
-            if($product->product_img != 'storage/img/no-image.png' && file_exists($product->product_img)) File::delete($product->product_img);
+            if($product->product_img != 'storage/img/no-image.png' && file_exists($product->product_img)){
+                File::delete($product->product_img);
+            }
             $product->delete();
         }
         return response()->json(array('status' => 0, 'message' => 'success'),200);
