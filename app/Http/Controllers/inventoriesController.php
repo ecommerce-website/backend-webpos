@@ -21,8 +21,8 @@ class inventoriesController extends Controller
             }
         ))
         ->orderBy('product_id','asc')
-        ->get();
-        return response()->json($this->transformCollection($products),200);
+        ->paginate(15);
+        return response()->json($products,200);
     }
 
     /**
@@ -89,27 +89,5 @@ class inventoriesController extends Controller
     public function destroy($id)
     {
         //
-    }
-    public function transformCollection($products) {
-        //Chuyển truy vấn dạng object thành mảng
-        $productsToArray = $products->toArray();
-        return [    
-            'status' => 0,
-            'messages' => 'Return success!',
-            'data' => array_map([$this,'transformData'],$productsToArray)
-        ];
-    }
-    public function transformData($products) {
-        //$show = json_decode(json_encode($products));
-        //Trả về định dạng cho dữ liệu
-        return [
-            'product_id' => $products['product_id'],
-            'product_stock_number' => $products['product_stock_number'],
-            'product_name' => $products['product_name'],
-            'product_unit_string' => $products['product_unit_string'],
-            'product_unit_quantity' => $products['product_unit_quantity'],
-            'product_on_hand' => $products['product_on_hand'],
-            'product_retail_price' => $products['product_retail_price']
-        ];
     }
 }

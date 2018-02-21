@@ -31,50 +31,9 @@ class invoiceController extends Controller
                 'message' => 'no Id found'
             ]
         ],422);
-        return response()->json($this->transformCollection($invoice),200);
+        return response()->json($invoice,200);
     }
-    public function transformCollection($invoice) {
-        $invoiceToArr = $invoice->toArray();
-        return [
-            'invoice_id' => $invoiceToArr['invoice_id'],
-            'invoice_date' => $invoiceToArr['created_at'],
-            'invoice_ref' => $invoiceToArr['invoice_ref'],
-            'invoice_remark' => $invoiceToArr['invoice_remark'],
-            'invoice_payment' => $invoiceToArr['invoice_payment_term'],
-            'invoice_customer' => $this->collectCustomer($invoiceToArr['customers']),
-            'invoice_products' => $this->collectQLInvoice($invoiceToArr['ql_invoices'])
-        ];
-    }
-    public function collectCustomer($customer) {
-        $cus = new class {};
-        $cus->customer_id = $customer['customer_id'];
-        $cus->customer_fname = $customer['customer_fname'];
-        $cus->customer_lname = $customer['customer_lname'];
-        $cus->customer_gender = $customer['customer_gender'];
-        return $cus;
-    }
-    public function collectQLInvoice($ql_invoices) {
-        $inv = [];
-        for ($i = 0;$i < count($ql_invoices);$i++) {
-            $obj = new class{};
-            $obj->ql_invoices_id = $ql_invoices[$i]['ql_invoices_id'];
-            $obj->ql_invoices_line_note = $ql_invoices[$i]['ql_invoices_line_note'];
-            $obj->quantity_bought = $ql_invoices[$i]['ql_invoices_quantity_bought'];
-            $obj->discount = $ql_invoices[$i]['ql_invoices_discount'];
-            $obj->products = $this->collectProduct($ql_invoices[$i]['products']);
-            array_push($inv, $obj);
-        }
-        return $inv;
-    }
-    public function collectProduct($product) {
-        $pro = new class {};
-        $pro->product_id = $product['product_id'];
-        $pro->product_stock_number = $product['product_stock_number'];
-        $pro->product_name = $product['product_name'];
-        $pro->product_price = $product['product_retail_price'];
-        return $pro;
-    }
-
+    
     /**
      * Show the form for creating a new resource.
      *

@@ -12,39 +12,15 @@ class invoicesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $invoices = Invoices::orderBy('invoice_id','desc')->paginate(10);
-        return response()->json($this->transformCollection($invoices),200);
-    }
-
-    public function transformCollection($invoices) {
-        $invoicesToArray = $invoices->toArray();
-        return [
-            'current_page' => $invoicesToArray['current_page'],
-            'first_page_url' => $invoicesToArray['first_page_url'],
-            'last_page_url' => $invoicesToArray['last_page_url'],
-            'next_page_url' => $invoicesToArray['next_page_url'],
-            'prev_page_url' => $invoicesToArray['prev_page_url'],
-            'per_page' => $invoicesToArray['per_page'],
-            'from' => $invoicesToArray['from'],
-            'to' => $invoicesToArray['to'],
-            'total' => $invoicesToArray['total'],
-            'status' => 0,
-            'messages' => 'Return success!',
-            'data' => array_map([$this,'transform'], $invoicesToArray['data'])
-        ];
-    }
-
-    public function transform($invoice) {
-        return [
-            'invoice_id' => $invoice['invoice_id'],
-            'invoice_ref' => $invoice['invoice_ref'],
-            'invoice_date' => $invoice['created_at'],
-            'invoice_transaction_type' => $invoice['invoice_transaction_type'],
-            'invoice_status' => $invoice['invoice_status']
-        ];
+        $id = $request->input("id");
+        if (empty($id)) {
+            $invoices = Invoices::orderBy('invoice_id','desc')->paginate(15);
+        } else {
+            $invoices = Invoices::where('invoice_id', $id)->orderBy('invoice_id','desc')->paginate(15);
+        }
+        return response()->json($invoices,200);
     }
 
     /**
