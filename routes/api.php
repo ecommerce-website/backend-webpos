@@ -35,7 +35,7 @@ Route::group(['prefix' => 'rest/v1/products'],function() {
 });
 Route::group(['prefix' => 'rest/v1/inventories'],function(){//done
 	Route::get('/','inventoriesController@index'); //OK
-	Route::get('filter','inventoriesFilter@index');	//OK
+	Route::post('query','inventoriesController@query');	//OK
 });
 Route::group(['prefix' => 'rest/v1/transactions'],function(){
 	Route::get('/','transactionsController@index'); //OK
