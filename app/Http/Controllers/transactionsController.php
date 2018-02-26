@@ -107,6 +107,12 @@ class transactionsController extends Controller
         if (is_null($transaction['transaction_type']) || empty($transaction['transaction_product'])) {
             return response()->json('not enough information!',422);
         }
+        foreach ($transaction['transaction_product'] as $value) {
+            # code...
+            $product = Products::where('product_id',$value['product_id'])->first();
+            if (is_null($product)) return response()->json('product has been removed!',422);
+        }
+
 
         //optional
         $transaction_type = $transaction['transaction_type'];
