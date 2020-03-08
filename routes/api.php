@@ -51,6 +51,9 @@ Route::group(['prefix' => 'rest/v1/invoices'],function(){
 	Route::post('update/{id}','invoiceController@update');//OK
 	Route::post('filter','invoiceFilter@index');
 });
+Route::group(['prefix' => 'rest/v1/statistic'],function(){
+	Route::get('/','statisticController@index');//OK
+});
 
 Route::group(['prefix' => 'rest/v1'], function(){
 	// Route::put('jokes/{id}', 'JokesController@update');
